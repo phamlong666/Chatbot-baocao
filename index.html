@@ -118,7 +118,11 @@
         <button id="btn-export-word" class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded text-sm font-bold">
           Xuất file Word
         </button>
-        <button id="btn-export-pdf" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">
+        <!-- Thay thế nút Powerpoint bằng nút Xuất PDF/Ảnh (Presentation) -->
+        <button id="btn-export-ppt" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold" title="Sử dụng chức năng In của trình duyệt để tạo PDF hoặc ảnh chất lượng cao để trình bày">
+          Xuất PDF/Ảnh (Presentation)
+        </button>
+        <button id="btn-export-pdf" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold" title="Kích hoạt hộp thoại In/Lưu PDF của trình duyệt">
           In / Lưu PDF
         </button>
       </div>
@@ -127,13 +131,16 @@
     <!-- MANUAL INPUT SECTION -->
     <div id="manual-area" class="card hidden hidden-print">
       <h3 class="font-bold text-gray-700 mb-2">Nhập tay chiều dài/tiết diện dây (Đơn vị: km):</h3>
+      <!-- Bổ sung thêm Đường dây hạ thế -->
+      <!-- Tổng chiều dài sẽ được tính toán lại trong JS (Chỉ tính trung thế) -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <input id="m-total" placeholder="Tổng chiều dài (km)" class="border p-2 rounded text-sm" value="">
+        <input id="m-total" placeholder="Tổng chiều dài TT (km)" class="border p-2 rounded text-sm" value="">
         <input id="m-471" placeholder="471 E6.22 (km)" class="border p-2 rounded text-sm" value="20.5">
         <input id="m-472" placeholder="472 E6.22 (km)" class="border p-2 rounded text-sm" value="15.0">
         <input id="m-473" placeholder="473 E6.22 (km)" class="border p-2 rounded text-sm" value="18.2">
         <input id="m-371" placeholder="371 E6.22 (km)" class="border p-2 rounded text-sm" value="12.8">
         <input id="m-373" placeholder="373 E6.22 (km)" class="border p-2 rounded text-sm" value="10.5">
+        <input id="m-lt" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="150.0">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
     </div>
@@ -169,7 +176,7 @@
 
         <!-- 3.2 Dây -->
         <div class="mb-6">
-          <h4 class="font-bold text-black mb-2">3.2. Chiều dài đường dây</h4>
+          <h4 class="font-bold text-black mb-2">3.2. Tổng chiều dài đường dây trung thế</h4>
           <div id="wire-summary" class="bg-gray-50 p-3 border text-sm"></div>
         </div>
 
@@ -257,7 +264,14 @@ const state = {
   charts: []
 };
 
-// --- KHỞI TẠO ---
+// Colors for charts with multiple categories (Yêu cầu 4 & 5)
+const CHART_COLORS = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6',
+    '#06b6d4', '#f97316', '#14b8a6', '#a855f7', '#fb923c', '#d946ef', '#0ea5e9',
+    '#e11d48', '#059669', '#ca8a04', '#7c3aed', '#be185d', '#4f46e5', '#22c3e5'
+];
+
+// --- KHỞI TẠO (Yêu cầu 1: Thêm năm đến 2030) ---
 (function init() {
   const selMonth = document.getElementById('sel-month');
   for(let i=1; i<=12; i++) selMonth.add(new Option(i, i));
@@ -265,7 +279,9 @@ const state = {
 
   const selYear = document.getElementById('sel-year');
   const curY = new Date().getFullYear();
-  for(let i=curY-3; i<=curY+1; i++) selYear.add(new Option(i, i));
+  // Điều chỉnh dải năm từ (Hiện tại - 3) đến 2030
+  const maxYear = 2030;
+  for(let i=curY-3; i<=maxYear; i++) selYear.add(new Option(i, i));
   selYear.value = state.year;
 
   document.getElementById('display-period').innerText = `Tháng ${state.month} Năm ${state.year}`;
@@ -284,6 +300,24 @@ document.getElementById('btn-apply-period').onclick = () => {
 document.getElementById('btn-manual').onclick = () => {
   document.getElementById('manual-area').classList.toggle('hidden');
 };
+
+// Cập nhật lại logic: nút PPT cũ giờ thành nút Xuất PDF/Ảnh (Presentation)
+document.getElementById('btn-export-ppt').onclick = () => {
+    const reportNode = document.getElementById('report-content');
+    if (reportNode.classList.contains('hidden')) {
+        const genButton = document.getElementById('btn-gen');
+        genButton.textContent = 'Vui lòng TẠO BÁO CÁO trước!';
+        genButton.classList.add('animate-pulse');
+        setTimeout(() => {
+            genButton.textContent = 'TẠO BÁO CÁO';
+            genButton.classList.remove('animate-pulse');
+        }, 3000);
+        return;
+    }
+    // Kích hoạt hộp thoại In (Print) của trình duyệt. Người dùng có thể chọn 'Save as PDF'
+    window.print();
+};
+
 
 const handleFile = (e, key) => {
   const f = e.target.files[0];
@@ -332,7 +366,7 @@ document.getElementById('btn-gen').onclick = () => {
   document.getElementById('report-content').scrollIntoView({behavior:'smooth'});
 };
 
-// ... [Code các hàm render 1, 2, 4 giữ nguyên, không thay đổi logic] ...
+// Yêu cầu 4: Cho mỗi cột một màu riêng cho biểu đồ Bộ phận và Trình độ
 function renderSection1_HR() {
   const data = state.files.baocao ? (state.files.baocao['CBCNV'] || Object.values(state.files.baocao)[0]) : [];
   if(data.length < 2) return; 
@@ -359,9 +393,10 @@ function renderSection1_HR() {
     const d = String(r[idxDept] || 'Khác').trim();
     deptStats[d] = (deptStats[d] || 0) + 1;
   });
-  createChart('c-age', 'doughnut', ageStats, 'Độ tuổi');
-  createChart('c-qual', 'bar', qualStats, 'Trình độ');
-  createChart('c-dept', 'bar', deptStats, 'Bộ phận');
+  // Sử dụng createChart với màu sắc riêng cho từng cột
+  createChart('c-age', 'doughnut', ageStats, 'Độ tuổi', true); 
+  createChart('c-qual', 'bar', qualStats, 'Trình độ', true); // True để dùng màu riêng
+  createChart('c-dept', 'bar', deptStats, 'Bộ phận', true); // True để dùng màu riêng
 }
 
 function renderSection2_Business() {
@@ -390,45 +425,86 @@ function renderSection2_Business() {
   container.innerHTML = html;
 }
 
-// 3. KỸ THUẬT - Đã sửa mục 3.3
+// 3. KỸ THUẬT - Đã sửa mục 3.1 & 3.2
 function renderSection3_Tech() {
-  // 3.1 TBA
+  // 3.1 TBA (Yêu cầu 3: Thêm dòng tổng cộng)
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
-  const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22'];
+  // Chỉ lấy 5 đường dây trung thế
+  const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22']; 
   const tbaDataSheet = state.files.baocao ? (state.files.baocao['Tên các TBA'] || state.files.baocao['TBA']) : null;
+  
+  let totalCount = 0;
+  let totalKVA = 0;
+  let totalDl = 0;
+  let totalKh = 0;
+
   if(tbaDataSheet) {
     const data = tbaDataSheet;
     const idxLine = 2; const idxCap = 5; const idxOwner = 7;
     const agg = {};
     data.slice(1).forEach(r => {
+      // Logic đơn giản: nếu đường dây không khớp, bỏ qua
       const lineName = String(r[idxLine] || '').trim();
-      if (!targetLines.includes(lineName)) return;
+      if (!targetLines.includes(lineName)) return; 
+      
       const capStr = String(r[idxCap] || '0').toUpperCase().replace('KVA', '').trim();
       const cap = parseFloat(capStr) || 0;
       const owner = String(r[idxOwner] || '').toLowerCase();
+      
       if(!agg[lineName]) agg[lineName] = { count: 0, kva: 0, kh: 0, dl: 0 };
+      
       agg[lineName].count++; agg[lineName].kva += cap;
-      if(owner.includes('khách hàng') || owner.includes('kh')) agg[lineName].kh++; else agg[lineName].dl++;
+      if(owner.includes('khách hàng') || owner.includes('kh')) { agg[lineName].kh++; totalKh++; } else { agg[lineName].dl++; totalDl++; }
+      
+      totalCount++; 
+      totalKVA += cap;
     });
+
     let html = `<table class="report-table"><thead><tr><th rowspan="2">Đường dây</th><th colspan="2">Tổng cộng</th><th colspan="2">Tài sản Điện lực</th><th colspan="2">Tài sản Khách hàng</th></tr><tr><th>SL</th><th>kVA</th><th>SL</th><th>%</th><th>SL</th><th>%</th></tr></thead><tbody>`;
     Object.keys(agg).sort().forEach(line => {
       const d = agg[line];
       const pDl = d.count>0?((d.dl/d.count)*100).toFixed(0):0;
       const pKh = d.count>0?((d.kh/d.count)*100).toFixed(0):0;
-      html += `<tr><td class="font-bold">${line}</td><td class="text-center font-bold">${d.count}</td><td class="text-right">${d.kva.toLocaleString('vi-VN')}</td><td class="text-center">${d.dl}</td><td class="text-center">${pDl}%</td><td class="text-center">${d.kh}</td><td class="text-center">${pKh}%</td></tr>`;
+      html += `<tr><td class="font-bold">${line}</td><td class="text-center font-bold">${d.count}</td><td class="text-right">${d.kva.toLocaleString('vi-VN')}</td><td class="text-center">${d.dl}</td><td class="text-center">${pDl}%</td><td class="text-center">${pKh}%</td></tr>`;
     });
+    
+    // Dòng TỔNG CỘNG
+    const totalPdl = totalCount > 0 ? ((totalDl/totalCount)*100).toFixed(0) : 0;
+    const totalPkh = totalCount > 0 ? ((totalKh/totalCount)*100).toFixed(0) : 0;
+    html += `<tr>
+                <td class="font-bold bg-gray-200">TỔNG CỘNG</td>
+                <td class="text-center font-bold bg-gray-200">${totalCount}</td>
+                <td class="text-right font-bold bg-gray-200">${totalKVA.toLocaleString('vi-VN')}</td>
+                <td class="text-center font-bold bg-gray-200">${totalDl}</td>
+                <td class="text-center font-bold bg-gray-200">${totalPdl}%</td>
+                <td class="text-center font-bold bg-gray-200">${totalKh}</td>
+                <td class="text-center font-bold bg-gray-200">${totalPkh}%</td>
+            </tr>`;
+    
     html += '</tbody></table>';
     tbaArea.innerHTML = html;
   }
 
-  // 3.2 Dây
-  let totalLength = 0;
-  ['m-471','m-472','m-473','m-371','m-373'].forEach(id=>{ totalLength += parseFloat(document.getElementById(id).value)||0; });
-  document.getElementById('m-total').value = totalLength.toFixed(1);
-  document.getElementById('wire-summary').innerHTML = `<ul class="grid grid-cols-2 gap-2"><li class="font-bold text-blue-800">Tổng: ${totalLength.toFixed(1)} km</li><li>471 E6.22: ${document.getElementById('m-471').value} km</li><li>472 E6.22: ${document.getElementById('m-472').value} km</li><li>473 E6.22: ${document.getElementById('m-473').value} km</li><li>371 E6.22: ${document.getElementById('m-371').value} km</li><li>373 E6.22: ${document.getElementById('m-373').value} km</li></ul>`;
+  // 3.2 Dây (Chỉ tính tổng cộng đường dây trung thế)
+  let totalLengthTT = 0;
+  // Chỉ lấy 5 đường dây trung thế để tính tổng
+  const wireInputsTT = ['m-471','m-472','m-473','m-371','m-373']; 
+  wireInputsTT.forEach(id=>{ totalLengthTT += parseFloat(document.getElementById(id).value)||0; });
+  // Cập nhật giá trị vào ô nhập liệu
+  document.getElementById('m-total').value = totalLengthTT.toFixed(1);
+  
+  document.getElementById('wire-summary').innerHTML = `<ul class="grid grid-cols-2 gap-2">
+    <li class="font-bold text-blue-800">Tổng chiều dài đường dây trung thế: ${totalLengthTT.toFixed(1)} km</li>
+    <li>471 E6.22: ${document.getElementById('m-471').value} km</li>
+    <li>472 E6.22: ${document.getElementById('m-472').value} km</li>
+    <li>473 E6.22: ${document.getElementById('m-473').value} km</li>
+    <li>371 E6.22: ${document.getElementById('m-371').value} km</li>
+    <li>373 E6.22: ${document.getElementById('m-373').value} km</li>
+    <li class="font-bold text-red-700">Đường dây hạ thế: ${document.getElementById('m-lt').value} km</li>
+    </ul>`;
 
-  // 3.3 Sự cố (Fix logic Date & Thêm Cột C, D, STT)
+  // 3.3 Sự cố (Giữ nguyên)
   const incArea = document.getElementById('incident-list-area');
   incArea.innerHTML = '';
   const incData = state.files.baocao ? (state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố']) : null;
@@ -534,8 +610,8 @@ function renderSection3_Tech() {
     });
     html += '</tbody></table>';
     incArea.innerHTML = html;
-    createChart('c-inc-type', 'pie', typeStats, 'Phân loại');
-    createChart('c-inc-nature', 'bar', natureStats, 'Tính chất');
+    createChart('c-inc-type', 'pie', typeStats, 'Phân loại', true);
+    createChart('c-inc-nature', 'bar', natureStats, 'Tính chất', true);
   } else {
     incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>';
   }
@@ -551,10 +627,11 @@ function renderSection4_Safety() {
     const type = String(r[r.length - 2] || 'Khác').trim();
     types[type] = (types[type] || 0) + 1;
   });
-  createChart('c-ecp1', 'doughnut', stats, 'Trạng thái Phiếu');
-  createChart('c-ecp2', 'bar', types, 'Loại công tác');
+  createChart('c-ecp1', 'doughnut', stats, 'Trạng thái Phiếu', true);
+  createChart('c-ecp2', 'bar', types, 'Loại công tác', true);
 }
 
+// Yêu cầu 5: Biểu đồ KPI sắp xếp giảm dần và mỗi đơn vị một màu riêng
 function renderSection5_KPI() {
   ['c-kpi-all', 'c-kpi-cumulative', 'c-kpi-yoy'].forEach(id => {
     const c = document.getElementById(id); 
@@ -569,7 +646,7 @@ function renderSection5_KPI() {
 
   const idxYear = 0; const idxMonth = 1; const idxName = 2; const idxVal = 3;
 
-  // --- CHART 1: KPI TẤT CẢ ĐƠN VỊ (Đã thêm đủ danh sách) ---
+  // --- CHART 1: KPI TẤT CẢ ĐƠN VỊ (Sắp xếp và màu sắc riêng) ---
   const targetUnits = [
       "Định Hóa", "Đồng Hỷ", "Đại Từ", "Phú Bình", "Phú Lương", "Phổ Yên", "Sông Công", "Thái Nguyên", "Võ Nhai",
       "Bắc Kạn", "Ngân Sơn", "Ba Bể", "Pác Nặm", "Chợ Đồn", "Na Rì", "Chợ Mới"
@@ -579,16 +656,23 @@ function renderSection5_KPI() {
     return parseInt(r[idxMonth]) === state.month && parseInt(r[idxYear]) === state.year;
   });
 
-  const labels1 = [];
-  const values1 = [];
-  const colors1 = [];
-
+  const kpiDataMap = {};
   targetUnits.forEach(unitName => {
       const row = currentMonthData.find(r => String(r[idxName]).includes(unitName));
       const val = row ? parseFloat(row[idxVal]) : 0;
-      labels1.push(unitName);
-      values1.push(val);
-      colors1.push(unitName === 'Định Hóa' ? '#dc2626' : '#3b82f6');
+      kpiDataMap[unitName] = val;
+  });
+  
+  // Sắp xếp giảm dần theo giá trị KPI
+  const sortedUnits = Object.entries(kpiDataMap).sort(([,a], [,b]) => b - a);
+  const labels1 = sortedUnits.map(([unit]) => unit);
+  const values1 = sortedUnits.map(([,value]) => value);
+  
+  // Tạo mảng màu sắc riêng biệt, highlight Định Hóa
+  const colors1 = labels1.map((unit, index) => {
+      if (unit === 'Định Hóa') return '#dc2626'; // Màu đỏ nổi bật cho Định Hóa
+      // Dùng mảng màu đã định nghĩa
+      return CHART_COLORS[index % CHART_COLORS.length];
   });
 
   const ctxAll = document.getElementById('c-kpi-all').getContext('2d');
@@ -599,7 +683,7 @@ function renderSection5_KPI() {
       datasets: [{
         label: `KPI T${state.month}/${state.year}`,
         data: values1,
-        backgroundColor: colors1,
+        backgroundColor: colors1, // Dùng mảng màu riêng biệt
         borderWidth: 1
       }]
     },
@@ -615,7 +699,16 @@ function renderSection5_KPI() {
             offset: 0
         }
       },
-      scales: { y: { beginAtZero: false, min: 80 } }
+      scales: { 
+          y: { 
+              beginAtZero: false, 
+              min: 80 // Đảm bảo biểu đồ có ý nghĩa
+          },
+          x: {
+              // Đảm bảo label không bị cắt
+              ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
+          }
+      }
     }
   }));
 
@@ -647,8 +740,8 @@ function renderSection5_KPI() {
       }));
   }
 
+  const curVal = kpiDataMap['Định Hóa'] || 0;
   const lastYear = state.year - 1;
-  const curVal = values1[labels1.indexOf('Định Hóa')] || 0;
   const lastYearRow = data.slice(1).find(r => parseInt(r[idxMonth])===state.month && parseInt(r[idxYear])===lastYear && String(r[idxName]).includes('Định Hóa'));
   const lastVal = lastYearRow ? parseFloat(lastYearRow[idxVal]) : 0;
 
@@ -671,32 +764,62 @@ function renderSection6_Other() {
   document.getElementById('other-content').innerText = document.getElementById('m-other').value || "(Chưa có nội dung)";
 }
 
-function createChart(id, type, dataObj, title) {
+// Thêm tham số useMultipleColors (Yêu cầu 4)
+function createChart(id, type, dataObj, title, useMultipleColors = false) {
   const ctx = document.getElementById(id);
   if(!ctx) return;
-  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6'];
+  
+  let colors;
+  if(useMultipleColors) {
+    // Dùng mảng màu đa dạng cho từng cột/phần
+    colors = Object.keys(dataObj).map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
+  } else {
+    // Dùng màu đơn sắc cho Bar, hoặc mảng màu cho Doughnut nếu không yêu cầu đặc biệt
+    colors = type==='bar' ? CHART_COLORS[0] : CHART_COLORS;
+  }
+  
   state.charts.push(new Chart(ctx, {
     type: type,
     data: {
       labels: Object.keys(dataObj),
-      datasets: [{ label: title, data: Object.values(dataObj), backgroundColor: type==='bar'?colors[0]:colors }]
+      datasets: [{ 
+          label: title, 
+          data: Object.values(dataObj), 
+          backgroundColor: colors // Sử dụng mảng màu đã chọn
+      }]
     },
-    options: { plugins: { legend: { display: type!=='bar' }, title: { display: true, text: title } } }
+    options: { 
+        plugins: { 
+            legend: { 
+                display: type!=='bar' // Hiển thị legend cho Pie/Doughnut
+            }, 
+            title: { 
+                display: true, 
+                text: title 
+            } 
+        } 
+    }
   }));
 }
 
-// --- XUẤT FILE WORD: ĐÃ BỔ SUNG HEADER ---
+// --- XUẤT FILE WORD: GIỮ NGUYÊN LOGIC CŨ ---
 document.getElementById('btn-export-word').onclick = () => {
     const reportNode = document.getElementById('report-content');
-    const headerNode = document.getElementById('report-header'); // Lấy phần header
+    const headerNode = document.getElementById('report-header'); 
 
     if (reportNode.classList.contains('hidden')) {
-        alert('Vui lòng tạo báo cáo trước.');
+        const genButton = document.getElementById('btn-gen');
+        genButton.textContent = 'Vui lòng TẠO BÁO CÁO trước!';
+        genButton.classList.add('animate-pulse');
+        setTimeout(() => {
+            genButton.textContent = 'TẠO BÁO CÁO';
+            genButton.classList.remove('animate-pulse');
+        }, 3000);
         return;
     }
 
     const cloneContent = reportNode.cloneNode(true);
-    const cloneHeader = headerNode.cloneNode(true); // Clone header
+    const cloneHeader = headerNode.cloneNode(true); 
 
     // Convert Canvas to Images in Clone
     const canvases = reportNode.querySelectorAll('canvas');
