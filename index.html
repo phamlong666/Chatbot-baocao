@@ -425,7 +425,7 @@ function renderSection2_Business() {
   container.innerHTML = html;
 }
 
-// 3. KỸ THUẬT - Đã sửa mục 3.1 & 3.2
+// 3. KỸ THUẬT - FIX LỖI HIỂN THỊ CỘT 'SL' CỦA TÀI SẢN KHÁCH HÀNG
 function renderSection3_Tech() {
   // 3.1 TBA (Yêu cầu 3: Thêm dòng tổng cộng)
   const tbaArea = document.getElementById('tba-summary-area');
@@ -466,7 +466,15 @@ function renderSection3_Tech() {
       const d = agg[line];
       const pDl = d.count>0?((d.dl/d.count)*100).toFixed(0):0;
       const pKh = d.count>0?((d.kh/d.count)*100).toFixed(0):0;
-      html += `<tr><td class="font-bold">${line}</td><td class="text-center font-bold">${d.count}</td><td class="text-right">${d.kva.toLocaleString('vi-VN')}</td><td class="text-center">${d.dl}</td><td class="text-center">${pDl}%</td><td class="text-center">${pKh}%</td></tr>`;
+      html += `<tr>
+                  <td class="font-bold">${line}</td>
+                  <td class="text-center font-bold">${d.count}</td>
+                  <td class="text-right">${d.kva.toLocaleString('vi-VN')}</td>
+                  <td class="text-center">${d.dl}</td>
+                  <td class="text-center">${pDl}%</td>
+                  <td class="text-center">${d.kh}</td> <!-- Đã SỬA: d.kh là số lượng Khách hàng -->
+                  <td class="text-center">${pKh}%</td>
+              </tr>`;
     });
     
     // Dòng TỔNG CỘNG
@@ -478,7 +486,7 @@ function renderSection3_Tech() {
                 <td class="text-right font-bold bg-gray-200">${totalKVA.toLocaleString('vi-VN')}</td>
                 <td class="text-center font-bold bg-gray-200">${totalDl}</td>
                 <td class="text-center font-bold bg-gray-200">${totalPdl}%</td>
-                <td class="text-center font-bold bg-gray-200">${totalKh}</td>
+                <td class="text-center font-bold bg-gray-200">${totalKh}</td> <!-- Đã SỬA: totalKh là tổng số lượng Khách hàng -->
                 <td class="text-center font-bold bg-gray-200">${totalPkh}%</td>
             </tr>`;
     
