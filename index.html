@@ -190,6 +190,40 @@
           <div id="incident-list-area"></div>
         </div>
       </section>
+	
+	<!-- 3.4 BÁO CÁO TỔN THẤT -->
+<div class="mb-6">
+  <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
+
+  <!-- 3.4.1 -->
+  <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="h-64 border p-2"><canvas id="loss-ky"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="loss-ky-cum"></canvas></div>
+  </div>
+
+  <!-- 3.4.2 -->
+  <h5 class="font-bold text-blue-700">3.4.2. Tổn thất đơn vị cấp điện áp</h5>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="h-64 border p-2"><canvas id="loss-cap"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="loss-cap-cum"></canvas></div>
+  </div>
+
+  <!-- 3.4.3 -->
+  <h5 class="font-bold text-blue-700">3.4.3. Tổn thất trung áp</h5>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="h-64 border p-2"><canvas id="loss-mid"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
+  </div>
+
+  <!-- 3.4.4 -->
+  <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="loss-low-cum"></canvas></div>
+  </div>
+
+</div>
 
       <!-- 4. AN TOÀN -->
       <section class="mb-8">
@@ -405,7 +439,7 @@ function renderSection2_Business() {
   if(!state.files.bckd) return;
   const sheet = Object.values(state.files.bckd)[0];
   if(!sheet || sheet.length < 2) return;
-  const header = ['STT', 'Chỉ tiêu', 'ĐVT', 'Kế hoạch', 'Thực hiện'];
+  const header = ['STT', 'Chỉ tiêu', 'ĐVT', 'Thực hiện', 'Lũy kế'];
   let html = '<table class="report-table"><thead><tr>';
   header.forEach(h => html += `<th>${h}</th>`);
   html += '</tr></thead><tbody>';
@@ -424,9 +458,61 @@ function renderSection2_Business() {
   html += '</tbody></table>';
   container.innerHTML = html;
 }
+// ========================
+// 3.3 BÁO CÁO TỔN THẤT
+// ========================
+function renderLossReport() {
 
+  const mapping = [
+    { sheet: "Tổn thất đơn vị kỳ thương phẩm", id: "loss-ky", idCum: "loss-ky-cum" },
+    { sheet: "Tổn thất đơn vị cấp điện áp", id: "loss-cap", idCum: "loss-cap-cum" },
+    { sheet: "Tổn thất trung áp", id: "loss-mid", idCum: "loss-mid-cum" },
+    { sheet: "Tổn thất hạ áp", id: "loss-low", idCum: "loss-low-cum" }
+  ];
+
+  mapping.forEach(item => {
+    const sheet = state.files.baocao[item.sheet];
+    if (!sheet || sheet.length < 2) return;
+
+    const rows = sheet.slice(1); 
+    let labels = [];
+    let values = [];
+    let cumValues = [];
+
+    let sumC = 0, sumD = 0;
+
+    rows.forEach(r => {
+      const year = parseInt(r[0]);
+      const month = parseInt(r[1]);
+      const cVal = parseFloat(r[2]) || 0;
+      const dVal = parseFloat(r[3]) || 0;
+      const loss = parseFloat(r[4]) || 0;
+
+      if (month === state.month) {
+        labels.push(year.toString());
+        values.push(loss);
+      }
+
+      if (year === state.year && month <= state.month) {
+        sumC += cVal;
+        sumD += dVal;
+        cumValues.push((sumD / sumC) * 100);
+      }
+    });
+
+    // Biểu đồ cột so sánh cùng kỳ
+    createChart(item.id, "bar", Object.fromEntries(labels.map((y,i)=>[y,values[i]])), "Tỷ lệ tổn thất", true);
+
+    // Biểu đồ lũy kế
+    createChart(item.idCum, "line", 
+      Object.fromEntries(cumValues.map((v,i)=>[`T${i+1}`, v])),
+      "Lũy kế tổn thất", 
+      false);
+  });
+}
 // 3. KỸ THUẬT - FIX LỖI HIỂN THỊ CỘT 'SL' CỦA TÀI SẢN KHÁCH HÀNG
 function renderSection3_Tech() {
+renderLossReport(); 
   // 3.1 TBA (Yêu cầu 3: Thêm dòng tổng cộng)
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
