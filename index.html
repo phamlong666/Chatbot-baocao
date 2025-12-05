@@ -712,17 +712,63 @@ renderLossReport();
 }
 
 function renderSection4_Safety() {
-  if(!state.files.ecp) return;
+
+  if (!state.files.ecp) return;
+
   const sheet = Object.values(state.files.ecp)[0];
-  const stats = {}; const types = {};
-  sheet.slice(1).forEach(r => {
-    const status = String(r[r.length - 1] || 'Khác').trim();
-    stats[status] = (stats[status] || 0) + 1;
-    const type = String(r[r.length - 2] || 'Khác').trim();
-    types[type] = (types[type] || 0) + 1;
+  if (!sheet || sheet.length < 2) return;
+
+  const rows = sheet.slice(1);
+
+  let C = 0, D = 0, E = 0, F = 0;
+  let sumC = 0, sumD = 0, sumE = 0, sumF = 0;
+
+  rows.forEach(r => {
+    const year = parseInt(r[0]);
+    const month = parseInt(r[1]);
+    const cVal = parseFloat(r[2]) || 0;
+    const dVal = parseFloat(r[3]) || 0;
+    const eVal = parseFloat(r[4]) || 0;
+    const fVal = parseFloat(r[5]) || 0;
+
+    if (year === state.year) {
+      if (month === state.month) {
+        C = cVal; D = dVal; E = eVal; F = fVal;
+      }
+      if (month <= state.month) {
+        sumC += cVal;
+        sumD += dVal;
+        sumE += eVal;
+        sumF += fVal;
+      }
+    }
   });
-  createChart('c-ecp1', 'doughnut', stats, 'Trạng thái Phiếu', true);
-  createChart('c-ecp2', 'bar', types, 'Loại công tác', true);
+
+  // 1️⃣ PLV trong tháng
+  const plvMonth = { "Kế hoạch": C, "Bổ sung": D, "Đột xuất": E };
+  createChart("c-ecp1", "pie", plvMonth, "PLV trong tháng", true);
+
+  // 2️⃣ Tỷ lệ hoãn hủy trong tháng
+  const totalMonth = C + D + E;
+  const cancelRateMonth = totalMonth > 0 ? (F / totalMonth * 100).toFixed(2) : 0;
+  createChart("c-ecp2", "pie",
+      { "Hoãn hủy": parseFloat(cancelRateMonth), "Thực hiện": 100 - cancelRateMonth },
+      "Tỷ lệ hoãn hủy", true);
+
+  // 3️⃣ PLV lũy kế
+  const plvCum = { 
+      "Kế hoạch": sumC, 
+      "Bổ sung": sumD, 
+      "Đột xuất": sumE 
+  };
+  createChart("c-ecp3", "pie", plvCum, "PLV lũy kế", true);
+
+  // 4️⃣ Lũy kế hoãn hủy
+  const totalCum = sumC + sumD + sumE;
+  const cancelRateCum = totalCum > 0 ? (sumF / totalCum * 100).toFixed(2) : 0;
+  createChart("c-ecp4", "pie",
+      { "Hoãn hủy": parseFloat(cancelRateCum), "Thực hiện": 100 - cancelRateCum },
+      "Lũy kế hoãn hủy", true);
 }
 
 // Yêu cầu 5: Biểu đồ KPI sắp xếp giảm dần và mỗi đơn vị một màu riêng
