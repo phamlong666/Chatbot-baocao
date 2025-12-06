@@ -226,13 +226,22 @@
 </div>
 
       <!-- 4. AN TOÀN -->
-      <section class="mb-8">
-        <h3>4. CÔNG TÁC AN TOÀN (ECP)</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="h-64 border p-2"><canvas id="c-ecp1"></canvas></div>
-          <div class="h-64 border p-2"><canvas id="c-ecp2"></canvas></div>
-        </div>
-      </section>
+<section class="mb-8">
+  <h3>4. CÔNG TÁC AN TOÀN (ECP)</h3>
+
+  <!-- Hàng 1: PLV tháng + Tỷ lệ hoãn hủy -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="h-64 border p-2"><canvas id="c-ecp1"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="c-ecp2"></canvas></div>
+  </div>
+
+  <!-- Hàng 2: PLV lũy kế + Lũy kế hoãn hủy -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="h-64 border p-2"><canvas id="c-ecp3"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="c-ecp4"></canvas></div>
+  </div>
+
+</section>
 
       <!-- 5. KPI -->
       <section class="mb-8">
@@ -490,7 +499,7 @@ function renderLossReport() {
 
       if (month === state.month) {
         labels.push(year.toString());
-        values.push(loss);
+        values.push(Number(loss));   // không format tại đây
       }
 
       if (year === state.year && month <= state.month) {
@@ -713,62 +722,62 @@ renderLossReport();
 
 function renderSection4_Safety() {
 
+  const year = state.year;
+  const month = state.month;
+
   if (!state.files.ecp) return;
 
   const sheet = Object.values(state.files.ecp)[0];
   if (!sheet || sheet.length < 2) return;
 
-  const rows = sheet.slice(1);
+  const rows = sheet.slice(1).filter(r =>
+      Number(r[0]) === year && Number(r[1]) === month
+  );
 
-  let C = 0, D = 0, E = 0, F = 0;
-  let sumC = 0, sumD = 0, sumE = 0, sumF = 0;
+  if (rows.length === 0) return;
 
-  rows.forEach(r => {
-    const year = parseInt(r[0]);
-    const month = parseInt(r[1]);
-    const cVal = parseFloat(r[2]) || 0;
-    const dVal = parseFloat(r[3]) || 0;
-    const eVal = parseFloat(r[4]) || 0;
-    const fVal = parseFloat(r[5]) || 0;
+  // Lấy dữ liệu theo yêu cầu
+  const plvKH = rows[0][2] || 0;  // C
+  const plvBS = rows[0][3] || 0;  // D
+  const plvDX = rows[0][4] || 0;  // E
+  const hoanHuy = rows[0][5] || 0; // F
 
-    if (year === state.year) {
-      if (month === state.month) {
-        C = cVal; D = dVal; E = eVal; F = fVal;
-      }
-      if (month <= state.month) {
-        sumC += cVal;
-        sumD += dVal;
-        sumE += eVal;
-        sumF += fVal;
-      }
-    }
-  });
+  // 1. PLV trong tháng
+  createChart("c-ecp1", "pie", {
+      "Kế hoạch": plvKH,
+      "Bổ sung": plvBS,
+      "Đột xuất": plvDX
+  }, "PLV trong tháng", true);
 
-  // 1️⃣ PLV trong tháng
-  const plvMonth = { "Kế hoạch": C, "Bổ sung": D, "Đột xuất": E };
-  createChart("c-ecp1", "pie", plvMonth, "PLV trong tháng", true);
+  // 2. Tỷ lệ hoãn hủy
+  const tongPLV = plvKH + plvBS + plvDX;
+  createChart("c-ecp2", "pie", {
+      "Hoãn/Hủy": hoanHuy,
+      "Thực hiện": tongPLV - hoanHuy
+  }, "Tỷ lệ hoãn hủy", true);
 
-  // 2️⃣ Tỷ lệ hoãn hủy trong tháng
-  const totalMonth = C + D + E;
-  const cancelRateMonth = totalMonth > 0 ? (F / totalMonth * 100).toFixed(2) : 0;
-  createChart("c-ecp2", "pie",
-      { "Hoãn hủy": parseFloat(cancelRateMonth), "Thực hiện": 100 - cancelRateMonth },
-      "Tỷ lệ hoãn hủy", true);
+  // 3. PLV lũy kế
+  const rowsYear = sheet.slice(1).filter(r => Number(r[0]) === year);
 
-  // 3️⃣ PLV lũy kế
-  const plvCum = { 
-      "Kế hoạch": sumC, 
-      "Bổ sung": sumD, 
-      "Đột xuất": sumE 
-  };
-  createChart("c-ecp3", "pie", plvCum, "PLV lũy kế", true);
+  const sumKH = rowsYear.reduce((a,b) => a + (Number(b[2])||0), 0);
+  const sumBS = rowsYear.reduce((a,b) => a + (Number(b[3])||0), 0);
+  const sumDX = rowsYear.reduce((a,b) => a + (Number(b[4])||0), 0);
 
-  // 4️⃣ Lũy kế hoãn hủy
-  const totalCum = sumC + sumD + sumE;
-  const cancelRateCum = totalCum > 0 ? (sumF / totalCum * 100).toFixed(2) : 0;
-  createChart("c-ecp4", "pie",
-      { "Hoãn hủy": parseFloat(cancelRateCum), "Thực hiện": 100 - cancelRateCum },
-      "Lũy kế hoãn hủy", true);
+  createChart("c-ecp3", "pie", {
+      "Kế hoạch": sumKH,
+      "Bổ sung": sumBS,
+      "Đột xuất": sumDX
+  }, "PLV lũy kế", true);
+
+  // 4. Lũy kế hoãn hủy
+  const sumHH = rowsYear.reduce((a,b) => a + (Number(b[5])||0), 0);
+  const tongLuyKe = sumKH + sumBS + sumDX;
+
+  createChart("c-ecp4", "pie", {
+      "Hoãn/Hủy": sumHH,
+      "Thực hiện": tongLuyKe - sumHH
+  }, "Lũy kế hoãn hủy", true);
+
 }
 
 // Yêu cầu 5: Biểu đồ KPI sắp xếp giảm dần và mỗi đơn vị một màu riêng
@@ -905,41 +914,80 @@ function renderSection6_Other() {
 }
 
 // Thêm tham số useMultipleColors (Yêu cầu 4)
-function createChart(id, type, dataObj, title, useMultipleColors = false) {
-  const ctx = document.getElementById(id);
-  if(!ctx) return;
-  
-  let colors;
-  if(useMultipleColors) {
-    // Dùng mảng màu đa dạng cho từng cột/phần
-    colors = Object.keys(dataObj).map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
-  } else {
-    // Dùng màu đơn sắc cho Bar, hoặc mảng màu cho Doughnut nếu không yêu cầu đặc biệt
-    colors = type==='bar' ? CHART_COLORS[0] : CHART_COLORS;
-  }
-  
-  state.charts.push(new Chart(ctx, {
-    type: type,
-    data: {
-      labels: Object.keys(dataObj),
-      datasets: [{ 
-          label: title, 
-          data: Object.values(dataObj), 
-          backgroundColor: colors // Sử dụng mảng màu đã chọn
-      }]
-    },
-    options: { 
-        plugins: { 
-            legend: { 
-                display: type!=='bar' // Hiển thị legend cho Pie/Doughnut
-            }, 
-            title: { 
-                display: true, 
-                text: title 
-            } 
-        } 
-    }
-  }));
+function createChart(id, type, dataObj, title, showValue = true) {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+
+    if (state.charts[id]) state.charts[id].destroy();
+
+    const labels = Object.keys(dataObj);
+    const values = Object.values(dataObj).map(v => Number(v));
+
+    state.charts[id] = new Chart(ctx, {
+        type,
+        data: {
+            labels,
+            datasets: [{
+                label: title,
+                data: values,
+                backgroundColor: [
+                    "#3b82f6", "#10b981", "#f97316", "#ef4444",
+                    "#6366f1", "#eab308", "#14b8a6", "#f43f5e"
+                ],
+                borderColor: "#2563eb",
+                fill: false,
+                tension: 0.2,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                title: { display: true, text: title, font: { size: 16 } },
+                legend: { position: "bottom" },
+
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const raw = Number(ctx.raw);
+                            const formatted = raw.toFixed(2).replace(".", ",");
+                            return `${ctx.label}: ${formatted}`;
+                        }
+                    }
+                },
+
+                datalabels: {
+                    display: true,
+                    color: "#000",
+                    anchor: type === "pie" ? "center" : "end",
+                    align: type === "pie" ? "center" : "top",
+
+                    formatter: function(value) {
+                        if (type === "pie") {
+                            const total = values.reduce((a, b) => a + b, 0);
+                            const percent = total ? Math.round((value / total) * 100) : 0;
+                            return `${value} (${percent}%)`;
+                        }
+
+                        return Number(value).toFixed(2).replace(".", ",");
+                    },
+                    font: { weight: "bold", size: 11 }
+                }
+            },
+
+            scales: type !== "pie" ? {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => value.toFixed(1)
+                    }
+                }
+            } : undefined
+        },
+        plugins: [ChartDataLabels]
+    });
 }
 
 // --- XUẤT FILE WORD: GIỮ NGUYÊN LOGIC CŨ ---
