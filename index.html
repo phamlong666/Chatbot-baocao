@@ -516,7 +516,7 @@ function renderLossReport() {
     createChart(item.idCum, "line", 
       Object.fromEntries(cumValues.map((v,i)=>[`T${i+1}`, v])),
       "Lũy kế tổn thất", 
-      false);
+      true);
   });
 }
 // 3. KỸ THUẬT - FIX LỖI HIỂN THỊ CỘT 'SL' CỦA TÀI SẢN KHÁCH HÀNG
@@ -913,81 +913,142 @@ function renderSection6_Other() {
   document.getElementById('other-content').innerText = document.getElementById('m-other').value || "(Chưa có nội dung)";
 }
 
-// Thêm tham số useMultipleColors (Yêu cầu 4)
-function createChart(id, type, dataObj, title, showValue = true) {
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
+// Thêm tham số useMultipleColors (Yêu cầu 4) 
+function createChart(id, type, dataObj, title, showValue = true) { 
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (state.charts[id]) state.charts[id].destroy();
+  const labels = Object.keys(dataObj);
+  const values = Object.values(dataObj).map(v => Number(v));
 
-    if (state.charts[id]) state.charts[id].destroy();
-
-    const labels = Object.keys(dataObj);
-    const values = Object.values(dataObj).map(v => Number(v));
-
-    state.charts[id] = new Chart(ctx, {
-        type,
-        data: {
-            labels,
-            datasets: [{
-                label: title,
-                data: values,
-                backgroundColor: [
-                    "#3b82f6", "#10b981", "#f97316", "#ef4444",
-                    "#6366f1", "#eab308", "#14b8a6", "#f43f5e"
-                ],
-                borderColor: "#2563eb",
-                fill: false,
-                tension: 0.2,
-                borderWidth: 1
-            }]
+  // Tùy chỉnh borderColor dựa trên type
+  let borderColor = "#2563eb";
+  if (type === 'line') {
+    borderColor = '#3b82f6';
+  } else if (type === 'doughnut' || type === 'pie') {
+    borderColor = '#fff';
+  }
+  
+  state.charts[id] = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        label: title,
+        data: values,
+        // Dùng CHART_COLORS cho biểu đồ pie/doughnut và bar nếu có cờ true
+        backgroundColor: type === 'pie' || type === 'doughnut' || showValue ? CHART_COLORS : "#3b82f6",
+        borderColor: borderColor, // Dùng biến đã tính toán
+        fill: false,
+        tension: 0.2,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          font: {
+            size: 16
+          }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            plugins: {
-                title: { display: true, text: title, font: { size: 16 } },
-                legend: { position: "bottom" },
-
-                tooltip: {
-                    callbacks: {
-                        label: function(ctx) {
-                            const raw = Number(ctx.raw);
-                            const formatted = raw.toFixed(2).replace(".", ",");
-                            return `${ctx.label}: ${formatted}`;
-                        }
-                    }
-                },
-
-                datalabels: {
-                    display: true,
-                    color: "#000",
-                    anchor: type === "pie" ? "center" : "end",
-                    align: type === "pie" ? "center" : "top",
-
-                    formatter: function(value) {
-                        if (type === "pie") {
-                            const total = values.reduce((a, b) => a + b, 0);
-                            const percent = total ? Math.round((value / total) * 100) : 0;
-                            return `${value} (${percent}%)`;
-                        }
-
-                        return Number(value).toFixed(2).replace(".", ",");
-                    },
-                    font: { weight: "bold", size: 11 }
-                }
-            },
-
-            scales: type !== "pie" ? {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => value.toFixed(1)
-                    }
-                }
-            } : undefined
+        legend: {
+          position: type === "pie" || type === "doughnut" ? "bottom" : "top"
         },
-        plugins: [ChartDataLabels]
-    });
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const raw = Number(ctx.raw);
+              // Kiểm tra nếu là biểu đồ phân phối số lượng (Mục 1)
+              const isCountDistribution = (
+                    type === "pie" || type === "doughnut" || 
+                    id === "c-dept" || id === "c-qual" || id === "c-age"
+                );
+              
+              let formatted;
+              if (isCountDistribution) {
+                  // Format số nguyên
+                  formatted = Math.round(raw);
+              } else {
+                  // Format mặc định (2 chữ số thập phân, dùng dấu phẩy)
+                  formatted = raw.toFixed(2).replace(".", ",");
+              }
+              return `${ctx.label}: ${formatted}`;
+            }
+          }
+        },
+        datalabels: {
+          display: showValue,
+          color: "#000",
+          
+          // Vị trí an toàn cho Line Chart
+          anchor: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "center" : "end"),
+          align: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "end" : "top"),
+          
+          // === PHẦN ĐÃ CHỈNH SỬA TƯỜNG MINH ĐIỀU KIỆN HIỂN THỊ ===
+          formatter: function(value, context) { 
+              // 1. Logic cho CÔNG TÁC QUẢN TRỊ (Mục 1)
+              const isCountDistribution = (
+                  type === "pie" || type === "doughnut" || 
+                  id === "c-dept" || id === "c-qual" || id === "c-age"
+              );
+              
+              if (isCountDistribution) { 
+                  const total = values.reduce((a, b) => a + b, 0); 
+                  const percent = total ? Math.round((value / total) * 100) : 0; 
+                  const formattedValue = Math.round(Number(value)); 
+                  return `${formattedValue} (${percent}%)`; 
+              }
+
+              // 2. Logic mặc định cho các biểu đồ khác (Line Chart/KPI)
+              const numValue = Number(value);
+
+              // Kiểm tra an toàn: nếu không phải số, ẩn nhãn
+              if (isNaN(numValue)) {
+                  return ''; 
+              }
+              
+              // **QUAN TRỌNG:** Nếu là Line Chart/KPI, chúng ta BUỘC phải hiển thị giá trị (kể cả 0)
+              // Plugin datalabels có thể ẩn giá trị 0 theo mặc định, chúng ta sẽ ghi đè điều đó.
+              // Nếu bạn muốn ẩn giá trị 0, hãy thay đổi logic này.
+              if (type === 'line' || type === 'bar') { 
+                // Định dạng 2 chữ số thập phân, dùng dấu phẩy (ví dụ: 10,50)
+                return numValue.toFixed(2).replace(".", ",");
+              }
+
+              // Mặc định cho các loại biểu đồ khác
+              return numValue.toFixed(2).replace(".", ","); 
+          }, 
+          // === KẾT THÚC PHẦN CHỈNH SỬA ===
+          
+          font: {
+            weight: "bold",
+            size: 11
+          }
+        }
+      },
+      // Thêm tùy chỉnh trục cho biểu đồ Bar
+      scales: {
+        y: {
+          beginAtZero: true,
+          display: type !== "pie" && type !== "doughnut",
+          ticks: {
+            // Định dạng cho trục Y (chỉ áp dụng cho các biểu đồ không phải pie/doughnut)
+            callback: function(value) {
+                if (type === "bar" || type === "line") {
+                    // Tránh làm tròn cho các giá trị thực (Loss, KPI) và hiển thị 1 chữ số thập phân
+                    return Number(value).toFixed(1).replace(/\.0$/, '').replace(".", ",");
+                }
+                return value;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // --- XUẤT FILE WORD: GIỮ NGUYÊN LOGIC CŨ ---
