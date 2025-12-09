@@ -182,13 +182,27 @@
 
         <!-- 3.3 Sự cố -->
         <div>
-          <h4 class="font-bold text-black mb-2">3.3. Tình hình sự cố</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="h-64 border p-2"><canvas id="c-inc-type"></canvas></div>
-            <div class="h-64 border p-2"><canvas id="c-inc-nature"></canvas></div>
-          </div>
-          <div id="incident-list-area"></div>
-        </div>
+  <h4 class="font-bold text-black mb-2">3.3. Tình hình sự cố</h4>
+
+  <!-- Biểu đồ tháng -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="h-64 border p-2"><canvas id="c-inc-type"></canvas></div>
+    <div class="h-64 border p-2"><canvas id="c-inc-nature"></canvas></div>
+  </div>
+
+  <!-- Ô lũy kế -->
+  <div id="incident-cumulative-box" class="p-3 mb-4 bg-yellow-100 border border-yellow-500 text-black font-bold text-center">
+      Lũy kế sự cố: <span id="incident-cum-value">0</span> vụ
+  </div>
+
+  <!-- Biểu đồ lũy kế -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="h-64 border p-2"><canvas id="c-inc-type-cum"></canvas></div>
+      <div class="h-64 border p-2"><canvas id="c-inc-nature-cum"></canvas></div>
+  </div>
+
+  <div id="incident-list-area"></div>
+</div>
       </section>
 	
 	<!-- 3.4 BÁO CÁO TỔN THẤT -->
@@ -285,6 +299,8 @@ Chart.defaults.font.family = "'Times New Roman', serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#000';
 Chart.defaults.maintainAspectRatio = false;
+
+// NOTE: We keep a safe default datalabels formatter here, but createChart accepts a forceInteger flag
 Chart.defaults.set('plugins.datalabels', {
   display: true,
   color: '#000',
@@ -295,6 +311,7 @@ Chart.defaults.set('plugins.datalabels', {
   formatter: (value) => {
     if (value === 0) return '';
     if (value > 1000) return (value / 1000).toFixed(1) + 'k';
+    // default (may be overridden by createChart forceInteger)
     return parseFloat(value).toFixed(2).replace(/\.00$/, '').toLocaleString('vi-VN');
   } 
 });
@@ -304,17 +321,17 @@ const state = {
   files: { baocao: null, bckd: null, ecp: null },
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
-  charts: []
+  charts: [] // some code pushes charts; createChart stores by id to avoid duplicates
 };
 
-// Colors for charts with multiple categories (Yêu cầu 4 & 5)
+// Colors for charts with multiple categories
 const CHART_COLORS = [
     '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6',
     '#06b6d4', '#f97316', '#14b8a6', '#a855f7', '#fb923c', '#d946ef', '#0ea5e9',
     '#e11d48', '#059669', '#ca8a04', '#7c3aed', '#be185d', '#4f46e5', '#22c3e5'
 ];
 
-// --- KHỞI TẠO (Yêu cầu 1: Thêm năm đến 2030) ---
+// --- KHỞI TẠO ---
 (function init() {
   const selMonth = document.getElementById('sel-month');
   for(let i=1; i<=12; i++) selMonth.add(new Option(i, i));
@@ -322,7 +339,6 @@ const CHART_COLORS = [
 
   const selYear = document.getElementById('sel-year');
   const curY = new Date().getFullYear();
-  // Điều chỉnh dải năm từ (Hiện tại - 3) đến 2030
   const maxYear = 2030;
   for(let i=curY-3; i<=maxYear; i++) selYear.add(new Option(i, i));
   selYear.value = state.year;
@@ -344,7 +360,6 @@ document.getElementById('btn-manual').onclick = () => {
   document.getElementById('manual-area').classList.toggle('hidden');
 };
 
-// Cập nhật lại logic: nút PPT cũ giờ thành nút Xuất PDF/Ảnh (Presentation)
 document.getElementById('btn-export-ppt').onclick = () => {
     const reportNode = document.getElementById('report-content');
     if (reportNode.classList.contains('hidden')) {
@@ -357,7 +372,6 @@ document.getElementById('btn-export-ppt').onclick = () => {
         }, 3000);
         return;
     }
-    // Kích hoạt hộp thoại In (Print) của trình duyệt. Người dùng có thể chọn 'Save as PDF'
     window.print();
 };
 
@@ -394,9 +408,14 @@ function updateFileStatus() {
 
 // --- MAIN GENERATE FUNCTION ---
 document.getElementById('btn-gen').onclick = () => {
-  state.charts.forEach(c => c.destroy());
+  // Destroy charts stored as array
+  state.charts.forEach(c => { try { c.destroy(); } catch(e){} });
   state.charts = [];
-  
+  // Destroy charts stored by id (safety)
+  Object.keys(state.charts).forEach(k => {
+    try { if(state.charts[k] && state.charts[k].destroy) state.charts[k].destroy(); } catch(e){}
+  });
+
   document.getElementById('report-content').classList.remove('hidden');
 
   renderSection1_HR();
@@ -409,10 +428,10 @@ document.getElementById('btn-gen').onclick = () => {
   document.getElementById('report-content').scrollIntoView({behavior:'smooth'});
 };
 
-// Yêu cầu 4: Cho mỗi cột một màu riêng cho biểu đồ Bộ phận và Trình độ
+// --- RENDER SECTION 1 (HR) ---
 function renderSection1_HR() {
   const data = state.files.baocao ? (state.files.baocao['CBCNV'] || Object.values(state.files.baocao)[0]) : [];
-  if(data.length < 2) return; 
+  if(!data || data.length < 2) return; 
   const rows = data.slice(1);
   const ageStats = {'<30':0, '30-40':0, '40-50':0, '>50':0};
   const qualStats = {};
@@ -437,11 +456,12 @@ function renderSection1_HR() {
     deptStats[d] = (deptStats[d] || 0) + 1;
   });
   // Sử dụng createChart với màu sắc riêng cho từng cột
-  createChart('c-age', 'doughnut', ageStats, 'Độ tuổi', true); 
-  createChart('c-qual', 'bar', qualStats, 'Trình độ', true); // True để dùng màu riêng
-  createChart('c-dept', 'bar', deptStats, 'Bộ phận', true); // True để dùng màu riêng
+  createChart('c-age', 'doughnut', ageStats, 'Độ tuổi', true);
+  createChart('c-qual', 'bar', qualStats, 'Trình độ', true);
+  createChart('c-dept', 'bar', deptStats, 'Bộ phận', true);
 }
 
+// --- RENDER SECTION 2 (Business) ---
 function renderSection2_Business() {
   const container = document.getElementById('bckd-table-area');
   container.innerHTML = '';
@@ -467,8 +487,9 @@ function renderSection2_Business() {
   html += '</tbody></table>';
   container.innerHTML = html;
 }
+
 // ========================
-// 3.3 BÁO CÁO TỔN THẤT
+// 3.3 BÁO CÁO TỔN THẤT (Loss) - giữ nguyên logic
 // ========================
 function renderLossReport() {
 
@@ -519,13 +540,14 @@ function renderLossReport() {
       true);
   });
 }
-// 3. KỸ THUẬT - FIX LỖI HIỂN THỊ CỘT 'SL' CỦA TÀI SẢN KHÁCH HÀNG
+
+// 3. KỸ THUẬT
 function renderSection3_Tech() {
-renderLossReport(); 
-  // 3.1 TBA (Yêu cầu 3: Thêm dòng tổng cộng)
+  renderLossReport();
+
+  // 3.1 TBA (yêu cầu: tổng cộng)
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
-  // Chỉ lấy 5 đường dây trung thế
   const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22']; 
   const tbaDataSheet = state.files.baocao ? (state.files.baocao['Tên các TBA'] || state.files.baocao['TBA']) : null;
   
@@ -539,7 +561,6 @@ renderLossReport();
     const idxLine = 2; const idxCap = 5; const idxOwner = 7;
     const agg = {};
     data.slice(1).forEach(r => {
-      // Logic đơn giản: nếu đường dây không khớp, bỏ qua
       const lineName = String(r[idxLine] || '').trim();
       if (!targetLines.includes(lineName)) return; 
       
@@ -567,21 +588,20 @@ renderLossReport();
                   <td class="text-right">${d.kva.toLocaleString('vi-VN')}</td>
                   <td class="text-center">${d.dl}</td>
                   <td class="text-center">${pDl}%</td>
-                  <td class="text-center">${d.kh}</td> <!-- Đã SỬA: d.kh là số lượng Khách hàng -->
+                  <td class="text-center">${d.kh}</td>
                   <td class="text-center">${pKh}%</td>
               </tr>`;
     });
     
-    // Dòng TỔNG CỘNG
     const totalPdl = totalCount > 0 ? ((totalDl/totalCount)*100).toFixed(0) : 0;
-    const totalPkh = totalCount > 0 ? ((totalKh/totalCount)*100).toFixed(0) : 0;
+    const totalPkh = totalCount > 0 ? ((totalKh/totalCount)*100).toFixed(0) : 0; 
     html += `<tr>
                 <td class="font-bold bg-gray-200">TỔNG CỘNG</td>
                 <td class="text-center font-bold bg-gray-200">${totalCount}</td>
                 <td class="text-right font-bold bg-gray-200">${totalKVA.toLocaleString('vi-VN')}</td>
                 <td class="text-center font-bold bg-gray-200">${totalDl}</td>
                 <td class="text-center font-bold bg-gray-200">${totalPdl}%</td>
-                <td class="text-center font-bold bg-gray-200">${totalKh}</td> <!-- Đã SỬA: totalKh là tổng số lượng Khách hàng -->
+                <td class="text-center font-bold bg-gray-200">${totalKh}</td>
                 <td class="text-center font-bold bg-gray-200">${totalPkh}%</td>
             </tr>`;
     
@@ -589,12 +609,10 @@ renderLossReport();
     tbaArea.innerHTML = html;
   }
 
-  // 3.2 Dây (Chỉ tính tổng cộng đường dây trung thế)
+  // 3.2 Dây
   let totalLengthTT = 0;
-  // Chỉ lấy 5 đường dây trung thế để tính tổng
   const wireInputsTT = ['m-471','m-472','m-473','m-371','m-373']; 
   wireInputsTT.forEach(id=>{ totalLengthTT += parseFloat(document.getElementById(id).value)||0; });
-  // Cập nhật giá trị vào ô nhập liệu
   document.getElementById('m-total').value = totalLengthTT.toFixed(1);
   
   document.getElementById('wire-summary').innerHTML = `<ul class="grid grid-cols-2 gap-2">
@@ -607,26 +625,26 @@ renderLossReport();
     <li class="font-bold text-red-700">Đường dây hạ thế: ${document.getElementById('m-lt').value} km</li>
     </ul>`;
 
-  // 3.3 Sự cố (Giữ nguyên)
+  // 3.3 Sự cố
   const incArea = document.getElementById('incident-list-area');
   incArea.innerHTML = '';
   const incData = state.files.baocao ? (state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố']) : null;
   
   if(incData) {
-    // Chỉ số cột trong Excel (A=0, B=1...)
-    const idxLocation = 2; // Cột C: Vị trí
-    const idxReason = 3;   // Cột D: Tóm tắt nguyên nhân
-    const idxType = 4;     // Cột E: Loại
-    const idxDate = 5;     // Cột F: Thời gian
-    const idxNature = 8;   // Cột I: Tính chất
-    const idxLine = 9;     // Cột J: Đường dây
-    const idxMonthYear = 10; // Cột K: Tháng/Năm (Dùng để lọc)
+    // Chỉ số cột (A=0...)
+    const idxLocation = 2; // C
+    const idxReason = 3;   // D
+    const idxType = 4;     // E
+    const idxDate = 5;     // F
+    const idxNature = 8;   // I
+    const idxLine = 9;     // J
+    const idxMonthYear = 10; // K
 
+    // Lọc sự cố trong tháng hiện tại
     const filteredInc = incData.slice(1).filter(r => {
       let d = null;
       const kValue = r[idxMonthYear];
       
-      // Xử lý ngày tháng cột K
       if (kValue) {
           if (typeof kValue === 'string') {
               if (kValue.includes('-')) {
@@ -640,7 +658,7 @@ renderLossReport();
               d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
           }
       }
-      // Fallback cột F nếu K lỗi
+      // fallback cột F
       if (!d && r[idxDate]) {
           const fValue = r[idxDate];
            if (typeof fValue === 'string') {
@@ -649,6 +667,8 @@ renderLossReport();
                    const parts = datePart.split('/');
                    d = new Date(parts[2], parts[1]-1, parts[0]);
                }
+           } else if (typeof fValue === 'number') {
+               d = new Date((fValue - (25567 + 2)) * 86400 * 1000);
            }
       }
 
@@ -659,7 +679,6 @@ renderLossReport();
     });
 
     const typeStats = {}; const natureStats = {};
-    // Header bảng: thêm STT, Vị trí (C), Nguyên nhân (D)
     let html = '<table class="report-table mt-2"><thead><tr><th>STT</th><th>Ngày</th><th>Đường dây</th><th>Vị trí/Thiết bị</th><th>Tóm tắt Nguyên nhân</th><th>Tính chất</th><th>Loại sự cố</th></tr></thead><tbody>';
     
     if(filteredInc.length === 0) {
@@ -667,7 +686,7 @@ renderLossReport();
     }
 
     filteredInc.forEach((r, idx) => {
-        // Format Ngày (dd/mm/yyyy)
+        // Format ngày
         let rawDate = r[idxMonthYear] || r[idxDate];
         let dateStr = '---';
         
@@ -678,8 +697,7 @@ renderLossReport();
              if(rawDate.includes('-')) {
                  const p = rawDate.split('-'); dObj = new Date(p[0], p[1]-1, p[2]);
              } else if(rawDate.includes('/')) {
-                 // Giả sử input dạng dd/mm/yyyy hoặc mm/dd/yyyy tùy Excel, nhưng ưu tiên split
-                 const p = rawDate.split(' ')[0].split('/'); // Bỏ phần giờ nếu có
+                 const p = rawDate.split(' ')[0].split('/'); 
                  if(p.length === 3) dObj = new Date(p[2], p[1]-1, p[0]);
              }
         }
@@ -687,7 +705,6 @@ renderLossReport();
         if(dObj && !isNaN(dObj.getTime())) {
             dateStr = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth()+1).padStart(2,'0')}/${dObj.getFullYear()}`;
         } else {
-            // Fallback hiển thị chuỗi gốc nếu ko parse được
             dateStr = String(rawDate).substring(0, 10);
         }
 
@@ -707,19 +724,79 @@ renderLossReport();
             <td>${type}</td>
         </tr>`;
 
-        // Chart Data
-        const t = String(type).trim(); typeStats[t] = (typeStats[t] || 0) + 1;
-        const n = String(nature).trim(); natureStats[n] = (natureStats[n] || 0) + 1;
+        // Chart Data (for monthly charts)
+        const t = String(type).trim(); if(t) typeStats[t] = (typeStats[t] || 0) + 1;
+        const n = String(nature).trim(); if(n) natureStats[n] = (natureStats[n] || 0) + 1;
     });
     html += '</tbody></table>';
     incArea.innerHTML = html;
+
+    // Monthly charts (existing)
     createChart('c-inc-type', 'pie', typeStats, 'Phân loại', true);
     createChart('c-inc-nature', 'bar', natureStats, 'Tính chất', true);
+
+    // =====================
+    // TÍNH & VẼ LŨY KẾ SỰ CỐ (Đặt ở đây - trong scope renderSection3_Tech)
+    // =====================
+    // Lũy kế trong năm (tính theo tháng 1..state.month)
+    const cumTypeStats = {};
+    const cumNatureStats = {};
+    let totalCum = 0;
+
+    // iterate through all rows and count those with year == state.year and month <= state.month
+    incData.slice(1).forEach(r => {
+        let d = null;
+        const kValue = r[idxMonthYear];
+        if (kValue) {
+            if (typeof kValue === 'number') {
+                d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
+            } else if (typeof kValue === 'string') {
+                if (kValue.includes('-')) {
+                    const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]);
+                } else if (kValue.includes('/')) {
+                    const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]);
+                }
+            }
+        }
+        // fallback to idxDate
+        if(!d && r[idxDate]) {
+            const f = r[idxDate];
+            if(typeof f === 'number') {
+                d = new Date((f - (25567 + 2)) * 86400 * 1000);
+            } else if (typeof f === 'string') {
+                if (f.includes('-')) {
+                    const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]);
+                } else if (f.includes('/')) {
+                    const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]);
+                }
+            }
+        }
+
+        if (d && !isNaN(d.getTime())) {
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            if (y === state.year && m <= state.month) {
+                totalCum++;
+                const t = String(r[idxType] || '').trim(); if(t) cumTypeStats[t] = (cumTypeStats[t] || 0) + 1;
+                const n = String(r[idxNature] || '').trim(); if(n) cumNatureStats[n] = (cumNatureStats[n] || 0) + 1;
+            }
+        }
+    });
+
+    // Show total in the yellow box as integer
+    const cumBox = document.getElementById('incident-cum-value');
+    if (cumBox) cumBox.innerText = totalCum;
+
+    // Create the two cumulative charts (force integer labels)
+    createChart('c-inc-type-cum', 'bar', cumTypeStats, 'Lũy kế theo phân loại', true, true);
+    createChart('c-inc-nature-cum', 'bar', cumNatureStats, 'Lũy kế theo tính chất', true, true);
+
   } else {
     incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>';
   }
 }
 
+// 4. AN TOÀN (ECP)
 function renderSection4_Safety() {
 
   const year = state.year;
@@ -780,7 +857,7 @@ function renderSection4_Safety() {
 
 }
 
-// Yêu cầu 5: Biểu đồ KPI sắp xếp giảm dần và mỗi đơn vị một màu riêng
+// 5. KPI
 function renderSection5_KPI() {
   ['c-kpi-all', 'c-kpi-cumulative', 'c-kpi-yoy'].forEach(id => {
     const c = document.getElementById(id); 
@@ -791,11 +868,10 @@ function renderSection5_KPI() {
   const kpiSheetName = Object.keys(state.files.baocao).find(k => k.toUpperCase() === 'KPI');
   if(!kpiSheetName) return;
   const data = state.files.baocao[kpiSheetName];
-  if(data.length<2) return;
+  if(!data || data.length<2) return;
 
   const idxYear = 0; const idxMonth = 1; const idxName = 2; const idxVal = 3;
 
-  // --- CHART 1: KPI TẤT CẢ ĐƠN VỊ (Sắp xếp và màu sắc riêng) ---
   const targetUnits = [
       "Định Hóa", "Đồng Hỷ", "Đại Từ", "Phú Bình", "Phú Lương", "Phổ Yên", "Sông Công", "Thái Nguyên", "Võ Nhai",
       "Bắc Kạn", "Ngân Sơn", "Ba Bể", "Pác Nặm", "Chợ Đồn", "Na Rì", "Chợ Mới"
@@ -812,15 +888,12 @@ function renderSection5_KPI() {
       kpiDataMap[unitName] = val;
   });
   
-  // Sắp xếp giảm dần theo giá trị KPI
   const sortedUnits = Object.entries(kpiDataMap).sort(([,a], [,b]) => b - a);
   const labels1 = sortedUnits.map(([unit]) => unit);
   const values1 = sortedUnits.map(([,value]) => value);
   
-  // Tạo mảng màu sắc riêng biệt, highlight Định Hóa
   const colors1 = labels1.map((unit, index) => {
-      if (unit === 'Định Hóa') return '#dc2626'; // Màu đỏ nổi bật cho Định Hóa
-      // Dùng mảng màu đã định nghĩa
+      if (unit === 'Định Hóa') return '#dc2626';
       return CHART_COLORS[index % CHART_COLORS.length];
   });
 
@@ -832,7 +905,7 @@ function renderSection5_KPI() {
       datasets: [{
         label: `KPI T${state.month}/${state.year}`,
         data: values1,
-        backgroundColor: colors1, // Dùng mảng màu riêng biệt
+        backgroundColor: colors1,
         borderWidth: 1
       }]
     },
@@ -851,17 +924,16 @@ function renderSection5_KPI() {
       scales: { 
           y: { 
               beginAtZero: false, 
-              min: 80 // Đảm bảo biểu đồ có ý nghĩa
+              min: 80
           },
           x: {
-              // Đảm bảo label không bị cắt
               ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
           }
       }
     }
   }));
 
-  // --- CHART 2 & 3 giữ nguyên logic ---
+  // KPI cumulative for Định Hóa
   const dhKpi = data.slice(1).filter(r => {
     return parseInt(r[idxYear]) === state.year && String(r[idxName]).includes('Định Hóa') && parseInt(r[idxMonth]) <= state.month;
   }).sort((a,b) => parseInt(a[idxMonth]) - parseInt(b[idxMonth]));
@@ -909,41 +981,51 @@ function renderSection5_KPI() {
   }));
 }
 
+// 6. OTHER
 function renderSection6_Other() {
   document.getElementById('other-content').innerText = document.getElementById('m-other').value || "(Chưa có nội dung)";
 }
 
-// Thêm tham số useMultipleColors (Yêu cầu 4) 
-function createChart(id, type, dataObj, title, showValue = true) { 
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  if (state.charts[id]) state.charts[id].destroy();
+/*
+  createChart:
+   - id: canvas id
+   - type: chart type (bar,line,pie,doughnut)
+   - dataObj: {label: value}
+   - title: chart title
+   - showValue: whether datalabels visible
+   - forceInteger: if true, datalabels and tooltips show integer (used for counts like incidents)
+*/
+function createChart(id, type, dataObj, title, showValue = true, forceInteger = false) { 
+  const ctxEl = document.getElementById(id);
+  if (!ctxEl) return;
+  // If there is a chart stored under this id, destroy it
+  try { if(state.charts[id] && state.charts[id].destroy) state.charts[id].destroy(); } catch(e){}
+
   const labels = Object.keys(dataObj);
   const values = Object.values(dataObj).map(v => Number(v));
 
-  // Tùy chỉnh borderColor dựa trên type
-  let borderColor = "#2563eb";
-  if (type === 'line') {
-    borderColor = '#3b82f6';
-  } else if (type === 'doughnut' || type === 'pie') {
-    borderColor = '#fff';
+  let backgroundColor;
+  if (type === 'pie' || type === 'doughnut') {
+    backgroundColor = labels.map((_,i)=>CHART_COLORS[i % CHART_COLORS.length]);
+  } else {
+    // For bar/line: if multiple labels use colors array, else single color
+    if (labels.length > 1) backgroundColor = labels.map((_,i)=>CHART_COLORS[i % CHART_COLORS.length]);
+    else backgroundColor = ['#3b82f6'];
   }
-  
-  state.charts[id] = new Chart(ctx, {
+
+  const dataset = {
+    label: title,
+    data: values,
+    backgroundColor,
+    borderColor: type === 'line' ? '#3b82f6' : '#2563eb',
+    fill: false,
+    tension: 0.2,
+    borderWidth: 1
+  };
+
+  const cfg = {
     type,
-    data: {
-      labels,
-      datasets: [{
-        label: title,
-        data: values,
-        // Dùng CHART_COLORS cho biểu đồ pie/doughnut và bar nếu có cờ true
-        backgroundColor: type === 'pie' || type === 'doughnut' || showValue ? CHART_COLORS : "#3b82f6",
-        borderColor: borderColor, // Dùng biến đã tính toán
-        fill: false,
-        tension: 0.2,
-        borderWidth: 1
-      }]
-    },
+    data: { labels, datasets: [dataset] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -951,9 +1033,7 @@ function createChart(id, type, dataObj, title, showValue = true) {
         title: {
           display: true,
           text: title,
-          font: {
-            size: 16
-          }
+          font: { size: 16 }
         },
         legend: {
           position: type === "pie" || type === "doughnut" ? "bottom" : "top"
@@ -962,84 +1042,51 @@ function createChart(id, type, dataObj, title, showValue = true) {
           callbacks: {
             label: function(ctx) {
               const raw = Number(ctx.raw);
-              // Kiểm tra nếu là biểu đồ phân phối số lượng (Mục 1)
-              const isCountDistribution = (
-                    type === "pie" || type === "doughnut" || 
-                    id === "c-dept" || id === "c-qual" || id === "c-age"
-                );
-              
-              let formatted;
-              if (isCountDistribution) {
-                  // Format số nguyên
-                  formatted = Math.round(raw);
-              } else {
-                  // Format mặc định (2 chữ số thập phân, dùng dấu phẩy)
-                  formatted = raw.toFixed(2).replace(".", ",");
+              if (forceInteger) {
+                return `${ctx.label}: ${Math.round(raw)}`;
               }
-              return `${ctx.label}: ${formatted}`;
+              // determine if this is a count distribution (pie/doughnut or c-age/c-dept/c-qual)
+              const isCountDistribution = (type === "pie" || type === "doughnut" || id === "c-dept" || id === "c-qual" || id === "c-age");
+              if (isCountDistribution) {
+                return `${ctx.label}: ${Math.round(raw)}`;
+              } else {
+                return `${ctx.label}: ${raw.toFixed(2).replace(".",",")}`;
+              }
             }
           }
         },
         datalabels: {
           display: showValue,
           color: "#000",
-          
-          // Vị trí an toàn cho Line Chart
           anchor: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "center" : "end"),
           align: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "end" : "top"),
-          
-          // === PHẦN ĐÃ CHỈNH SỬA TƯỜNG MINH ĐIỀU KIỆN HIỂN THỊ ===
-          formatter: function(value, context) { 
-              // 1. Logic cho CÔNG TÁC QUẢN TRỊ (Mục 1)
-              const isCountDistribution = (
-                  type === "pie" || type === "doughnut" || 
-                  id === "c-dept" || id === "c-qual" || id === "c-age"
-              );
-              
-              if (isCountDistribution) { 
-                  const total = values.reduce((a, b) => a + b, 0); 
-                  const percent = total ? Math.round((value / total) * 100) : 0; 
-                  const formattedValue = Math.round(Number(value)); 
-                  return `${formattedValue} (${percent}%)`; 
-              }
-
-              // 2. Logic mặc định cho các biểu đồ khác (Line Chart/KPI)
+          formatter: function(value, context) {
               const numValue = Number(value);
-
-              // Kiểm tra an toàn: nếu không phải số, ẩn nhãn
-              if (isNaN(numValue)) {
-                  return ''; 
+              if (isNaN(numValue)) return '';
+              if (forceInteger) return `${Math.round(numValue)}`;
+              const isCountDistribution = (type === "pie" || type === "doughnut" || id === "c-dept" || id === "c-qual" || id === "c-age");
+              if (isCountDistribution) {
+                  const total = values.reduce((a,b)=>a+b,0);
+                  const percent = total ? Math.round((numValue/total)*100) : 0;
+                  return `${Math.round(numValue)} (${percent}%)`;
               }
-              
-              // **QUAN TRỌNG:** Nếu là Line Chart/KPI, chúng ta BUỘC phải hiển thị giá trị (kể cả 0)
-              // Plugin datalabels có thể ẩn giá trị 0 theo mặc định, chúng ta sẽ ghi đè điều đó.
-              // Nếu bạn muốn ẩn giá trị 0, hãy thay đổi logic này.
-              if (type === 'line' || type === 'bar') { 
-                // Định dạng 2 chữ số thập phân, dùng dấu phẩy (ví dụ: 10,50)
+              if (type === 'line' || type === 'bar') {
                 return numValue.toFixed(2).replace(".", ",");
               }
-
-              // Mặc định cho các loại biểu đồ khác
-              return numValue.toFixed(2).replace(".", ","); 
-          }, 
-          // === KẾT THÚC PHẦN CHỈNH SỬA ===
-          
-          font: {
-            weight: "bold",
-            size: 11
-          }
+              return numValue.toFixed(2).replace(".", ",");
+          },
+          font: { weight: "bold", size: 11 }
         }
       },
-      // Thêm tùy chỉnh trục cho biểu đồ Bar
       scales: {
         y: {
           beginAtZero: true,
           display: type !== "pie" && type !== "doughnut",
           ticks: {
-            // Định dạng cho trục Y (chỉ áp dụng cho các biểu đồ không phải pie/doughnut)
             callback: function(value) {
                 if (type === "bar" || type === "line") {
-                    // Tránh làm tròn cho các giá trị thực (Loss, KPI) và hiển thị 1 chữ số thập phân
+                    // If forceInteger, show integer ticks if values are integer-like
+                    if (forceInteger) return `${Math.round(Number(value))}`;
                     return Number(value).toFixed(1).replace(/\.0$/, '').replace(".", ",");
                 }
                 return value;
@@ -1048,10 +1095,20 @@ function createChart(id, type, dataObj, title, showValue = true) {
         }
       }
     }
-  });
+  };
+
+  // create and store
+  try {
+    const chart = new Chart(ctxEl, cfg);
+    // store under both array and id for compatibility
+    state.charts.push(chart);
+    state.charts[id] = chart;
+  } catch(e) {
+    console.error('createChart error for', id, e);
+  }
 }
 
-// --- XUẤT FILE WORD: GIỮ NGUYÊN LOGIC CŨ ---
+// --- XUẤT FILE WORD ---
 document.getElementById('btn-export-word').onclick = () => {
     const reportNode = document.getElementById('report-content');
     const headerNode = document.getElementById('report-header'); 
@@ -1100,7 +1157,6 @@ document.getElementById('btn-export-word').onclick = () => {
         </style>
         </head><body>`;
     
-    // Ghép Header + Nội dung
     const sourceHTML = header + cloneHeader.innerHTML + "<br><hr><br>" + cloneContent.innerHTML + "</body></html>";
 
     const blob = new Blob(['\ufeff', sourceHTML], {
@@ -1116,7 +1172,7 @@ document.getElementById('btn-export-word').onclick = () => {
     document.body.removeChild(link);
 };
 
-// XUẤT PDF: Dùng window.print() chuẩn hơn
+// XUẤT PDF
 document.getElementById('btn-export-pdf').onclick = () => {
     window.print();
 };
