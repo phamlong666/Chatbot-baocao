@@ -110,7 +110,7 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-wrap gap-2 border-t pt-4 mt-2">
-        <button id="btn-manual" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Nhập tay số liệu dây</button>
+        <button id="btn-manual" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Nhập tay số liệu </button>
         <div class="flex-grow"></div>
         <button id="btn-gen" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold shadow text-sm">
           TẠO BÁO CÁO
@@ -143,6 +143,20 @@
         <input id="m-lt" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="667.40 ">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
+<div class="mt-6">
+  <h3 class="font-bold text-gray-700 mb-2">📸 Ảnh minh họa cho Mục 6:</h3>
+
+  <input type="file" id="manual-images" accept="image/*" multiple hidden>
+  <button onclick="document.getElementById('manual-images').click()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">
+      ➕ Tải ảnh
+  </button>
+
+  <!-- Hiển thị danh sách ảnh -->
+  <div id="manual-image-preview"
+       class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  </div>
+</div>
     </div>
 
     <!-- REPORT CONTENT AREA -->
@@ -983,18 +997,30 @@ function renderSection5_KPI() {
 
 // 6. OTHER
 function renderSection6_Other() {
-  document.getElementById('other-content').innerText = document.getElementById('m-other').value || "(Chưa có nội dung)";
-}
+  const text = document.getElementById('m-other').value || "(Chưa có nội dung)";
+  
+  // nội dung văn bản cũ
+  let html = `<div class="mb-4 whitespace-pre-line">${text}</div>`;
 
-/*
-  createChart:
-   - id: canvas id
-   - type: chart type (bar,line,pie,doughnut)
-   - dataObj: {label: value}
-   - title: chart title
-   - showValue: whether datalabels visible
-   - forceInteger: if true, datalabels and tooltips show integer (used for counts like incidents)
-*/
+  // bổ sung ảnh — không ảnh hưởng logic khác
+  if (manualImages && manualImages.length > 0) {
+      html += `<h4 class="font-bold mt-4 mb-2 text-blue-700">📷 Hình ảnh minh họa:</h4>`;
+
+      for (let img of manualImages) {
+        html += `
+          <div class="my-4 border p-2 rounded bg-gray-50">
+              <img src="${img.src}" 
+                   style="max-width: 500px; width: 100%; border-radius: 6px;" />
+              <div class="mt-1 text-sm italic">
+                ${img.caption || "(Không có mô tả)"}
+              </div>
+          </div>
+        `;
+      }
+  }
+
+  document.getElementById('other-content').innerHTML = html;
+}
 function createChart(id, type, dataObj, title, showValue = true, forceInteger = false) { 
   const ctxEl = document.getElementById(id);
   if (!ctxEl) return;
@@ -1175,7 +1201,64 @@ document.getElementById('btn-export-word').onclick = () => {
 // XUẤT PDF
 document.getElementById('btn-export-pdf').onclick = () => {
     window.print();
-};
+};  // <-- đóng hàm và đóng dấu } đầy đủ
+
+// ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
+let manualImages = []; // dạng: [{src: base64, caption: ""}]
+
+document.getElementById("manual-images").addEventListener("change", function (e) {
+    const files = Array.from(e.target.files);
+
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            manualImages.push({
+                src: evt.target.result,
+                caption: ""
+            });
+            renderManualImages();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    e.target.value = ""; // reset input
+});
+
+function renderManualImages() {
+    const box = document.getElementById("manual-image-preview");
+    box.innerHTML = "";
+
+    manualImages.forEach((obj, index) => {
+        const div = document.createElement("div");
+        div.className = "border rounded p-2 bg-white shadow";
+
+        div.innerHTML = `
+            <img src="${obj.src}" class="w-full h-40 object-cover rounded">
+            
+            <textarea 
+                class="w-full border rounded p-1 mt-2 text-sm"
+                placeholder="Nhập mô tả ảnh..."
+                oninput="updateManualCaption(${index}, this.value)"
+            >${obj.caption}</textarea>
+
+            <button onclick="deleteManualImage(${index})"
+                    class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">
+                Xóa ảnh
+            </button>
+        `;
+
+        box.appendChild(div);
+    });
+}
+
+function updateManualCaption(i, text) {
+    manualImages[i].caption = text;
+}
+
+function deleteManualImage(i) {
+    manualImages.splice(i, 1);
+    renderManualImages();
+}
 </script>
 </body>
 </html>
