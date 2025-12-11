@@ -998,25 +998,20 @@ function renderSection5_KPI() {
 // 6. OTHER
 function renderSection6_Other() {
   const text = document.getElementById('m-other').value || "(Chưa có nội dung)";
-  
-  // nội dung văn bản cũ
   let html = `<div class="mb-4 whitespace-pre-line">${text}</div>`;
 
-  // bổ sung ảnh — không ảnh hưởng logic khác
-  if (manualImages && manualImages.length > 0) {
+  if (manualImages.length > 0) {
       html += `<h4 class="font-bold mt-4 mb-2 text-blue-700">📷 Hình ảnh minh họa:</h4>`;
 
-      for (let img of manualImages) {
-        html += `
-          <div class="my-4 border p-2 rounded bg-gray-50">
-              <img src="${img.src}" 
-                   style="max-width: 500px; width: 100%; border-radius: 6px;" />
-              <div class="mt-1 text-sm italic">
-                ${img.caption || "(Không có mô tả)"}
+      manualImages.forEach((img) => {
+          html += `
+              <div class="my-4 border p-2 rounded bg-gray-50" style="text-align:${img.align}">
+                  <img src="${img.src}"
+                       style="width:${img.width}px; border-radius:6px; display:inline-block;" />
+                  <div class="mt-1 text-sm italic">${img.caption || "(Không có mô tả)"}</div>
               </div>
-          </div>
-        `;
-      }
+          `;
+      });
   }
 
   document.getElementById('other-content').innerHTML = html;
@@ -1204,7 +1199,8 @@ document.getElementById('btn-export-pdf').onclick = () => {
 };  // <-- đóng hàm và đóng dấu } đầy đủ
 
 // ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
-let manualImages = []; // dạng: [{src: base64, caption: ""}]
+// ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
+let manualImages = []; // [{src, caption, align, width}]
 
 document.getElementById("manual-images").addEventListener("change", function (e) {
     const files = Array.from(e.target.files);
@@ -1214,14 +1210,16 @@ document.getElementById("manual-images").addEventListener("change", function (e)
         reader.onload = function(evt) {
             manualImages.push({
                 src: evt.target.result,
-                caption: ""
+                caption: "",
+                align: "center",
+                width: 400
             });
             renderManualImages();
         };
         reader.readAsDataURL(file);
     });
 
-    e.target.value = ""; // reset input
+    e.target.value = "";
 });
 
 function renderManualImages() {
@@ -1233,16 +1231,29 @@ function renderManualImages() {
         div.className = "border rounded p-2 bg-white shadow";
 
         div.innerHTML = `
-            <img src="${obj.src}" class="w-full h-40 object-cover rounded">
-            
+            <img src="${obj.src}"
+                 style="width:${obj.width}px; display:block; margin:auto;">
+
             <textarea 
                 class="w-full border rounded p-1 mt-2 text-sm"
                 placeholder="Nhập mô tả ảnh..."
                 oninput="updateManualCaption(${index}, this.value)"
             >${obj.caption}</textarea>
 
+            <div class="flex items-center gap-1 mt-2 text-xs">
+                <button onclick="updateImageAlign(${index}, 'left')" class="px-2 py-1 bg-gray-200 rounded">⬅️ Trái</button>
+                <button onclick="updateImageAlign(${index}, 'center')" class="px-2 py-1 bg-gray-200 rounded">🔳 Giữa</button>
+                <button onclick="updateImageAlign(${index}, 'right')" class="px-2 py-1 bg-gray-200 rounded">➡️ Phải</button>
+            </div>
+
+            <label class="text-xs mt-2 block">Kích thước (px):</label>
+            <input type="number" min="100" max="1200"
+                   value="${obj.width}"
+                   oninput="updateImageWidth(${index}, this.value)"
+                   class="w-full border rounded px-1 py-1 text-sm mt-1"/>
+
             <button onclick="deleteManualImage(${index})"
-                    class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">
+                class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">
                 Xóa ảnh
             </button>
         `;
@@ -1253,6 +1264,16 @@ function renderManualImages() {
 
 function updateManualCaption(i, text) {
     manualImages[i].caption = text;
+}
+
+function updateImageAlign(i, align) {
+    manualImages[i].align = align;
+    renderManualImages();
+}
+
+function updateImageWidth(i, width) {
+    manualImages[i].width = Number(width);
+    renderManualImages();
 }
 
 function deleteManualImage(i) {
