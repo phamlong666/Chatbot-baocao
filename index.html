@@ -503,56 +503,151 @@ function renderSection2_Business() {
 }
 
 // ========================
-// 3.3 BÁO CÁO TỔN THẤT (Loss) - giữ nguyên logic
+// 3.3 BÁO CÁO TỔN THẤT (Loss) - CẬP NHẬT XỬ LÝ GIÁ TRỊ ÂM & CÂN ĐỐI TRỤC Y
 // ========================
 function renderLossReport() {
+    const mapping = [
+        { sheet: "Tổn thất đơn vị kỳ thương phẩm", id: "loss-ky", idCum: "loss-ky-cum" },
+        { sheet: "Tổn thất đơn vị cấp điện áp", id: "loss-cap", idCum: "loss-cap-cum" },
+        { sheet: "Tổn thất trung áp", id: "loss-mid", idCum: "loss-mid-cum" },
+        { sheet: "Tổn thất hạ áp", id: "loss-low", idCum: "loss-low-cum" }
+    ];
 
-  const mapping = [
-    { sheet: "Tổn thất đơn vị kỳ thương phẩm", id: "loss-ky", idCum: "loss-ky-cum" },
-    { sheet: "Tổn thất đơn vị cấp điện áp", id: "loss-cap", idCum: "loss-cap-cum" },
-    { sheet: "Tổn thất trung áp", id: "loss-mid", idCum: "loss-mid-cum" },
-    { sheet: "Tổn thất hạ áp", id: "loss-low", idCum: "loss-low-cum" }
-  ];
+    mapping.forEach(item => {
+        const sheet = state.files.baocao[item.sheet];
+        if (!sheet || sheet.length < 2) return;
+        const rows = sheet.slice(1);
+        
+        const currentYear = state.year;
+        const lastYear = currentYear - 1;
 
-  mapping.forEach(item => {
-    const sheet = state.files.baocao[item.sheet];
-    if (!sheet || sheet.length < 2) return;
+        let curSumC = Array(12).fill(0), curSumD = Array(12).fill(0);
+        let lastSumC = Array(12).fill(0), lastSumD = Array(12).fill(0);
+        
+        let barLabels = [];
+        let barValues = [];
 
-    const rows = sheet.slice(1); 
-    let labels = [];
-    let values = [];
-    let cumValues = [];
+        rows.forEach(r => {
+            const year = parseInt(r[0]);
+            const month = parseInt(r[1]);
+            const cVal = parseFloat(r[2]) || 0;
+            const dVal = parseFloat(r[3]) || 0;
+            const loss = parseFloat(r[4]) || 0;
 
-    let sumC = 0, sumD = 0;
+            if (month === state.month) {
+                barLabels.push(year.toString());
+                barValues.push(loss);
+            }
 
-    rows.forEach(r => {
-      const year = parseInt(r[0]);
-      const month = parseInt(r[1]);
-      const cVal = parseFloat(r[2]) || 0;
-      const dVal = parseFloat(r[3]) || 0;
-      const loss = parseFloat(r[4]) || 0;
+            if (year === currentYear) {
+                curSumC[month - 1] = cVal;
+                curSumD[month - 1] = dVal;
+            } else if (year === lastYear) {
+                lastSumC[month - 1] = cVal;
+                lastSumD[month - 1] = dVal;
+            }
+        });
 
-      if (month === state.month) {
-        labels.push(year.toString());
-        values.push(Number(loss));   // không format tại đây
-      }
+        let currentYearLine = [];
+        let lastYearLine = [];
+        let allValues = []; // Dùng để tính toán min/max cho trục Y
 
-      if (year === state.year && month <= state.month) {
-        sumC += cVal;
-        sumD += dVal;
-        cumValues.push((sumD / sumC) * 100);
-      }
+        for (let i = 0; i < 12; i++) {
+            // Lũy kế năm hiện tại
+            let sC_cur = 0, sD_cur = 0;
+            for (let j = 0; j <= i; j++) { sC_cur += curSumC[j]; sD_cur += curSumD[j]; }
+            let vCur = sC_cur !== 0 ? (sD_cur / sC_cur) * 100 : null;
+            currentYearLine.push(vCur);
+            if (vCur !== null) allValues.push(vCur);
+
+            // Lũy kế năm trước
+            let sC_last = 0, sD_last = 0;
+            for (let j = 0; j <= i; j++) { sC_last += lastSumC[j]; sD_last += lastSumD[j]; }
+            let vLast = sC_last !== 0 ? (sD_last / sC_last) * 100 : null;
+            lastYearLine.push(vLast);
+            if (vLast !== null) allValues.push(vLast);
+        }
+
+        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA (BAO GỒM CẢ GIÁ TRỊ ÂM)
+        let minVal = allValues.length ? Math.min(...allValues) : 0;
+        let maxVal = allValues.length ? Math.max(...allValues) : 10;
+        
+        // Tạo khoảng đệm 30% dải dữ liệu để đường line không chạm biên
+        let range = maxVal - minVal;
+        let padding = range * 0.3 || 5; 
+        let yMin = minVal - padding;
+        let yMax = maxVal + padding;
+
+        // VẼ BIỂU ĐỒ CỘT
+        createChart(item.id, "bar", Object.fromEntries(barLabels.map((y, i) => [y, barValues[i]])), "Tỷ lệ tổn thất tháng " + state.month, true);
+
+        // VẼ BIỂU ĐỒ LINE
+        const lineCtx = document.getElementById(item.idCum).getContext('2d');
+        const oldChart = Chart.getChart(item.idCum);
+        if (oldChart) oldChart.destroy();
+
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 12 }, (_, i) => `T${i + 1}`),
+                datasets: [
+                    {
+                        label: `Lũy kế năm ${currentYear} (%)`,
+                        data: currentYearLine,
+                        borderColor: '#ef4444',
+                        backgroundColor: '#ef4444',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        datalabels: { 
+                            align: 'top', 
+                            anchor: 'end', 
+                            color: '#000', 
+                            font: { weight: 'bold', size: 10 },
+                            offset: 4
+                        }
+                    },
+                    {
+                        label: `Lũy kế cùng kỳ ${lastYear} (%)`,
+                        data: lastYearLine,
+                        borderColor: '#2563eb',
+                        backgroundColor: '#2563eb',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        datalabels: { 
+                            align: 'bottom', 
+                            anchor: 'start', 
+                            color: '#000', 
+                            font: { weight: 'bold', size: 10 },
+                            offset: 4
+                        }
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom' },
+                    datalabels: {
+                        display: true,
+                        formatter: (v) => v !== null ? v.toFixed(2) : ''
+                    }
+                },
+                scales: {
+                    y: { 
+                        min: yMin, 
+                        max: yMax,
+                        grid: {
+                            color: (context) => (context.tick.value === 0 ? '#000' : '#e5e7eb'), // Làm đậm đường mốc 0
+                            lineWidth: (context) => (context.tick.value === 0 ? 2 : 1)
+                        },
+                        title: { display: true, text: '%' } 
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
     });
-
-    // Biểu đồ cột so sánh cùng kỳ
-    createChart(item.id, "bar", Object.fromEntries(labels.map((y,i)=>[y,values[i]])), "Tỷ lệ tổn thất", true);
-
-    // Biểu đồ lũy kế
-    createChart(item.idCum, "line", 
-      Object.fromEntries(cumValues.map((v,i)=>[`T${i+1}`, v])),
-      "Lũy kế tổn thất", 
-      true);
-  });
 }
 
 // 3. KỸ THUẬT
