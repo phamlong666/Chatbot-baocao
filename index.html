@@ -140,7 +140,11 @@
         <input id="m-473" placeholder="473 E6.22 (km)" class="border p-2 rounded text-sm" value="37.82">
         <input id="m-371" placeholder="371 E6.22 (km)" class="border p-2 rounded text-sm" value="40.23">
         <input id="m-373" placeholder="373 E6.22 (km)" class="border p-2 rounded text-sm" value="71.77">
-        <input id="m-lt" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="667.40 ">
+        <input id="m-lt-day" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="667.40 ">
+    	<input id="m-recloser" placeholder="Máy cắt Recloser (bộ)" class="border p-2 rounded text-sm" value="06 ">
+    	<input id="m-lbs" placeholder="LBS (bộ)" class="border p-2 rounded text-sm" value="13 ">
+    	<input id="m-tubutt" placeholder="Tụ bù trung thế (bộ)" class="border p-2 rounded text-sm" value="04 ">
+    	<input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
 <div class="mt-6">
@@ -731,7 +735,11 @@ function renderSection3_Tech() {
     <li>473 E6.22: ${document.getElementById('m-473').value} km</li>
     <li>371 E6.22: ${document.getElementById('m-371').value} km</li>
     <li>373 E6.22: ${document.getElementById('m-373').value} km</li>
-    <li class="font-bold text-red-700">Đường dây hạ thế: ${document.getElementById('m-lt').value} km</li>
+    <li class="font-bold text-blue-800">Đường dây hạ thế: ${document.getElementById('m-lt-day').value} km</li> 
+    <li class="font-bold text-blue-800">Máy cắt Recloser: ${document.getElementById('m-recloser').value} bộ</li> 
+    <li class="font-bold text-blue-800">LBS: ${document.getElementById('m-lbs').value} bộ</li> 
+    <li class="font-bold text-blue-800">Tụ bù trung thế: ${document.getElementById('m-tubutt').value} bộ</li> 
+    <li class="font-bold text-blue-800">Tụ bù hạ thế: ${document.getElementById('m-tbuht').value} bộ</li>
     </ul>`;
 
   // 3.3 Sự cố
