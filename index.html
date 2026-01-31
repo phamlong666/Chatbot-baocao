@@ -554,38 +554,47 @@ function renderLossReport() {
 
         let currentYearLine = [];
         let lastYearLine = [];
-        let allValues = []; // Dùng để tính toán min/max cho trục Y
+        let allValues = []; 
 
         for (let i = 0; i < 12; i++) {
-            // Lũy kế năm hiện tại
-            let sC_cur = 0, sD_cur = 0;
-            for (let j = 0; j <= i; j++) { sC_cur += curSumC[j]; sD_cur += curSumD[j]; }
-            let vCur = sC_cur !== 0 ? (sD_cur / sC_cur) * 100 : null;
-            currentYearLine.push(vCur);
-            if (vCur !== null) allValues.push(vCur);
+            // Lũy kế năm hiện tại: Chỉ tính và đẩy dữ liệu nếu tháng i + 1 <= tháng báo cáo
+            if (i + 1 <= state.month) {
+                let sC_cur = 0, sD_cur = 0;
+                for (let j = 0; j <= i; j++) { 
+                    sC_cur += curSumC[j]; 
+                    sD_cur += curSumD[j];
+                }
+                let vCur = sC_cur !== 0 ? (sD_cur / sC_cur) * 100 : 0;
+                currentYearLine.push(vCur);
+                allValues.push(vCur);
+            } else {
+                // Các tháng sau tháng báo cáo trong năm hiện tại sẽ là null để không vẽ line
+                currentYearLine.push(null);
+            }
 
-            // Lũy kế năm trước
+            // Lũy kế năm trước: Luôn hiển thị cả năm (12 tháng)
             let sC_last = 0, sD_last = 0;
-            for (let j = 0; j <= i; j++) { sC_last += lastSumC[j]; sD_last += lastSumD[j]; }
-            let vLast = sC_last !== 0 ? (sD_last / sC_last) * 100 : null;
+            for (let j = 0; j <= i; j++) { 
+                sC_last += lastSumC[j]; 
+                sD_last += lastSumD[j];
+            }
+            let vLast = sC_last !== 0 ? (sD_last / sC_last) * 100 : 0;
             lastYearLine.push(vLast);
-            if (vLast !== null) allValues.push(vLast);
+            allValues.push(vLast);
         }
 
-        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA (BAO GỒM CẢ GIÁ TRỊ ÂM)
-        let minVal = allValues.length ? Math.min(...allValues) : 0;
-        let maxVal = allValues.length ? Math.max(...allValues) : 10;
-        
-        // Tạo khoảng đệm 30% dải dữ liệu để đường line không chạm biên
+        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA
+        let minVal = allValues.length ? Math.min(...allValues.filter(v => v !== null)) : 0;
+        let maxVal = allValues.length ? Math.max(...allValues.filter(v => v !== null)) : 10;
         let range = maxVal - minVal;
         let padding = range * 0.3 || 5; 
         let yMin = minVal - padding;
         let yMax = maxVal + padding;
 
-        // VẼ BIỂU ĐỒ CỘT
+        // VẼ BIỂU ĐỒ CỘT (3.4.x bên trái)
         createChart(item.id, "bar", Object.fromEntries(barLabels.map((y, i) => [y, barValues[i]])), "Tỷ lệ tổn thất tháng " + state.month, true);
 
-        // VẼ BIỂU ĐỒ LINE
+        // VẼ BIỂU ĐỒ LINE (3.4.x bên phải - Lũy kế)
         const lineCtx = document.getElementById(item.idCum).getContext('2d');
         const oldChart = Chart.getChart(item.idCum);
         if (oldChart) oldChart.destroy();
@@ -602,12 +611,14 @@ function renderLossReport() {
                         backgroundColor: '#ef4444',
                         borderWidth: 2,
                         tension: 0.2,
+                        spanGaps: false, // Quan trọng: Không nối các điểm null
                         datalabels: { 
                             align: 'top', 
                             anchor: 'end', 
                             color: '#000', 
                             font: { weight: 'bold', size: 10 },
-                            offset: 4
+                            offset: 4,
+                            formatter: (v) => (v !== null ? v.toFixed(2) : '')
                         }
                     },
                     {
@@ -622,7 +633,8 @@ function renderLossReport() {
                             anchor: 'start', 
                             color: '#000', 
                             font: { weight: 'bold', size: 10 },
-                            offset: 4
+                            offset: 4,
+                            formatter: (v) => (v !== null ? v.toFixed(2) : '')
                         }
                     }
                 ]
@@ -632,17 +644,14 @@ function renderLossReport() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: true, position: 'bottom' },
-                    datalabels: {
-                        display: true,
-                        formatter: (v) => v !== null ? v.toFixed(2) : ''
-                    }
+                    datalabels: { display: true }
                 },
                 scales: {
                     y: { 
                         min: yMin, 
                         max: yMax,
                         grid: {
-                            color: (context) => (context.tick.value === 0 ? '#000' : '#e5e7eb'), // Làm đậm đường mốc 0
+                            color: (context) => (context.tick.value === 0 ? '#000' : '#e5e7eb'),
                             lineWidth: (context) => (context.tick.value === 0 ? 2 : 1)
                         },
                         title: { display: true, text: '%' } 
