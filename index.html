@@ -214,14 +214,33 @@
   </div>
 
   <!-- Biểu đồ lũy kế -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div class="h-64 border p-2"><canvas id="c-inc-type-cum"></canvas></div>
-      <div class="h-64 border p-2"><canvas id="c-inc-nature-cum"></canvas></div>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="h-64 border p-2">
+        <canvas id="c-inc-type-cum"></canvas>
+    </div>
 
-  <div id="incident-list-area"></div>
+    <div class="h-64 border p-2">
+        <canvas id="c-inc-nature-cum"></canvas>
+    </div>
 </div>
-      </section>
+
+<!-- Biểu đồ so sánh cùng kỳ -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+    <div class="h-72 border p-2">
+        <canvas id="c-inc-yoy"></canvas>
+    </div>
+
+    <div class="h-72 border p-2">
+        <canvas id="c-inc-line-yoy"></canvas>
+    </div>
+
+</div>
+
+<div id="incident-list-area"></div>
+
+</div>
+</section>
 	
 	<!-- 3.4 BÁO CÁO TỔN THẤT -->
 <div class="mb-6">
@@ -917,6 +936,183 @@ function renderSection3_Tech() {
     createChart('c-inc-type-cum', 'bar', cumTypeStats, 'Lũy kế theo phân loại', true, true);
     createChart('c-inc-nature-cum', 'bar', cumNatureStats, 'Lũy kế theo tính chất', true, true);
 
+// =====================
+// SO SÁNH LŨY KẾ SỰ CỐ CÙNG KỲ
+// =====================
+
+let totalCumLastYear = 0;
+
+const lineCumCurrent = {};
+const lineCumLast = {};
+
+// Duyệt lại dữ liệu để tính cùng kỳ
+incData.slice(1).forEach(r => {
+
+    let d = null;
+    const kValue = r[idxMonthYear];
+
+    if (kValue) {
+
+        if (typeof kValue === 'number') {
+
+            d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
+
+        } else if (typeof kValue === 'string') {
+
+            if (kValue.includes('-')) {
+
+                const p = kValue.split('-');
+                d = new Date(p[0], p[1]-1, p[2]);
+
+            } else if (kValue.includes('/')) {
+
+                const p = kValue.split('/');
+                d = new Date(p[2], p[1]-1, p[0]);
+            }
+        }
+    }
+
+    // fallback cột F
+    if(!d && r[idxDate]) {
+
+        const f = r[idxDate];
+
+        if(typeof f === 'number') {
+
+            d = new Date((f - (25567 + 2)) * 86400 * 1000);
+
+        } else if (typeof f === 'string') {
+
+            if (f.includes('-')) {
+
+                const p = f.split('-');
+                d = new Date(p[0], p[1]-1, p[2]);
+
+            } else if (f.includes('/')) {
+
+                const p = f.split(' ')[0].split('/');
+
+                if(p.length===3) {
+                    d = new Date(p[2], p[1]-1, p[0]);
+                }
+            }
+        }
+    }
+
+    if (d && !isNaN(d.getTime())) {
+
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+
+        const line = String(r[idxLine] || '').trim();
+
+        // năm hiện tại
+        if (y === state.year && m <= state.month) {
+
+            if(line) {
+                lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1;
+            }
+        }
+
+        // cùng kỳ năm trước
+        if (y === (state.year - 1) && m <= state.month) {
+
+            totalCumLastYear++;
+
+            if(line) {
+                lineCumLast[line] = (lineCumLast[line] || 0) + 1;
+            }
+        }
+    }
+});
+
+// cập nhật ô lũy kế
+if (cumBox) {
+    cumBox.innerText = `${totalCum} vụ (Cùng kỳ: ${totalCumLastYear} vụ)`;
+}
+
+// Biểu đồ tổng lũy kế
+createChart(
+    'c-inc-yoy',
+    'bar',
+    {
+        [`${state.year - 1}`]: totalCumLastYear,
+        [`${state.year}`]: totalCum
+    },
+    `Lũy kế sự cố đến T${state.month}`,
+    true,
+    true
+);
+
+// Biểu đồ đường dây
+const allLines = [
+    ...new Set([
+        ...Object.keys(lineCumCurrent),
+        ...Object.keys(lineCumLast)
+    ])
+].sort();
+
+const ctxLine = document.getElementById('c-inc-line-yoy');
+
+if (ctxLine) {
+
+    const old = Chart.getChart('c-inc-line-yoy');
+
+    if (old) old.destroy();
+
+    new Chart(ctxLine, {
+
+        type: 'bar',
+
+        data: {
+            labels: allLines,
+
+            datasets: [
+                {
+                    label: `Cùng kỳ ${state.year - 1}`,
+                    data: allLines.map(l => lineCumLast[l] || 0),
+                    backgroundColor: '#3b82f6'
+                },
+                {
+                    label: `Năm ${state.year}`,
+                    data: allLines.map(l => lineCumCurrent[l] || 0),
+                    backgroundColor: '#ef4444'
+                }
+            ]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: {
+                    position: 'bottom'
+                },
+
+                datalabels: {
+                    color: '#000',
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: (v) => v > 0 ? v : ''
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        },
+
+        plugins: [ChartDataLabels]
+    });
+}
+
   } else {
     incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>';
   }
@@ -1100,7 +1296,7 @@ function renderSection5_KPI() {
           datasets: [{
               label: 'Điểm KPI',
               data: [lastVal, curVal],
-              backgroundColor: ['#9ca3af', '#dc2626']
+              backgroundColor: ['#3b82f6', '#dc2626']
           }]
       },
       options: { scales: { y: { min: 80 } }, plugins: { legend: {display: false} } }
