@@ -10,38 +10,27 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
   <style>
-    /* 1. Cấu hình Font chữ Times New Roman cho toàn bộ trang */
     body { 
         font-family: "Times New Roman", Times, serif; 
         background: #f3f4f6; 
         color: #000; 
-        font-size: 13pt; /* Kích thước chuẩn văn bản */
+        font-size: 13pt;
     }
-    
     .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 16px; }
-    
-    /* Style bảng báo cáo cho đẹp và khi in ra */
     .report-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; margin-bottom: 10px; }
     .report-table th { background-color: #e5e7eb; font-weight: bold; text-align: center; padding: 5px; border: 1px solid #000; }
     .report-table td { border: 1px solid #000; padding: 5px; vertical-align: middle; }
-    
-    /* Định dạng tiêu đề */
     h1, h2, h3, h4 { font-weight: bold; color: #003366; margin-bottom: 0.5em; }
     h1 { font-size: 18pt; text-transform: uppercase; }
     h2 { font-size: 14pt; }
     h3 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: 5px; margin-top: 20px;}
-    
     .hidden-print { display: block; }
-
-    /* Cấu hình khi in (Xuất PDF) */
     @media print { 
         .hidden-print { display: none !important; } 
         body { background: white; padding: 0; }
         .card { box-shadow: none; border: none; padding: 0; margin-bottom: 20px; }
-        /* Đảm bảo in màu nền của biểu đồ/bảng */
         -webkit-print-color-adjust: exact; 
         print-color-adjust: exact;
-        /* Ngắt trang hợp lý */
         section { break-inside: avoid; }
     }
   </style>
@@ -69,12 +58,10 @@
             <button onclick="document.getElementById('f-bc').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition font-bold">
               📂 1. Upload Baocao_tonghop
             </button>
-
             <input type="file" id="f-bckd" accept=".xlsx,.xls" hidden />
             <button onclick="document.getElementById('f-bckd').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm transition font-bold">
               📂 2. Upload BCKD_Thang
             </button>
-            
             <input type="file" id="f-ecp" accept=".xlsx,.xls" hidden />
             <button onclick="document.getElementById('f-ecp').click()" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-sm transition font-bold">
               📂 3. Upload ECP
@@ -111,10 +98,10 @@
         <button id="btn-export-word" class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded text-sm font-bold">
           Xuất file Word
         </button>
-        <button id="btn-export-ppt" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold" title="Sử dụng chức năng In của trình duyệt để tạo PDF hoặc ảnh chất lượng cao để trình bày">
+        <button id="btn-export-ppt" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold">
           Xuất PDF/Ảnh (Presentation)
         </button>
-        <button id="btn-export-pdf" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold" title="Kích hoạt hộp thoại In/Lưu PDF của trình duyệt">
+        <button id="btn-export-pdf" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">
           In / Lưu PDF
         </button>
       </div>
@@ -136,23 +123,15 @@
     	<input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
-<div class="mt-6">
-  <h3 class="font-bold text-gray-700 mb-2">📸 Ảnh minh họa cho Mục 6:</h3>
-
-  <input type="file" id="manual-images" accept="image/*" multiple hidden>
-  <button onclick="document.getElementById('manual-images').click()"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">
-      ➕ Tải ảnh
-  </button>
-
-  <div id="manual-image-preview"
-       class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  </div>
-</div>
+      <div class="mt-6">
+        <h3 class="font-bold text-gray-700 mb-2">📸 Ảnh minh họa cho Mục 6:</h3>
+        <input type="file" id="manual-images" accept="image/*" multiple hidden>
+        <button onclick="document.getElementById('manual-images').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">➕ Tải ảnh</button>
+        <div id="manual-image-preview" class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
     </div>
 
     <div id="report-content" class="min-h-screen hidden bg-white p-4">
-      
       <section class="mb-8">
         <h3>1. CÔNG TÁC QUẢN TRỊ</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -169,99 +148,70 @@
 
       <section class="mb-8">
         <h3>3. CÔNG TÁC QUẢN LÝ KỸ THUẬT</h3>
-        
         <div class="mb-6">
           <h4 class="font-bold text-black mb-2">3.1. Số liệu Trạm biến áp (Tổng hợp theo đường dây)</h4>
           <div id="tba-summary-area" class="overflow-x-auto"></div>
         </div>
-
         <div class="mb-6">
           <h4 class="font-bold text-black mb-2">3.2. Tổng chiều dài đường dây trung thế</h4>
           <div id="wire-summary" class="bg-gray-50 p-3 border text-sm"></div>
         </div>
-
         <div>
-  <h4 class="font-bold text-black mb-2">3.3. Tình hình sự cố</h4>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <div class="h-64 border p-2"><canvas id="c-inc-type"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="c-inc-nature"></canvas></div>
-  </div>
-
-  <div id="incident-cumulative-box" class="p-3 mb-4 bg-yellow-100 border border-yellow-500 text-black font-bold text-center">
-      Lũy kế sự cố: <span id="incident-cum-value">0</span> vụ
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <div class="h-64 border p-2">
-        <canvas id="c-inc-type-cum"></canvas>
-    </div>
-
-    <div class="h-64 border p-2">
-        <canvas id="c-inc-nature-cum"></canvas>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-
-    <div class="h-72 border p-2">
-        <canvas id="c-inc-yoy"></canvas>
-    </div>
-
-    <div class="h-72 border p-2">
-        <canvas id="c-inc-line-yoy"></canvas>
-    </div>
-
-</div>
-
-<div id="incident-list-area"></div>
-
-</div>
-</section>
+          <h4 class="font-bold text-black mb-2">3.3. Tình hình sự cố</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="h-64 border p-2"><canvas id="c-inc-type"></canvas></div>
+            <div class="h-64 border p-2"><canvas id="c-inc-nature"></canvas></div>
+          </div>
+          <div id="incident-cumulative-box" class="p-3 mb-4 bg-yellow-100 border border-yellow-500 text-black font-bold text-center">
+              Lũy kế sự cố: <span id="incident-cum-value">0</span> vụ
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="h-64 border p-2"><canvas id="c-inc-type-cum"></canvas></div>
+            <div class="h-64 border p-2"><canvas id="c-inc-nature-cum"></canvas></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="h-72 border p-2"><canvas id="c-inc-yoy"></canvas></div>
+            <div class="h-72 border p-2"><canvas id="c-inc-line-yoy"></canvas></div>
+          </div>
+          <div id="incident-list-area"></div>
+        </div>
+      </section>
 	
-	<div class="mb-6">
-  <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
-
-  <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div class="h-64 border p-2"><canvas id="loss-ky"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="loss-ky-cum"></canvas></div>
-  </div>
-
-  <h5 class="font-bold text-blue-700">3.4.2. Tổn thất đơn vị cấp điện áp</h5>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div class="h-64 border p-2"><canvas id="loss-cap"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="loss-cap-cum"></canvas></div>
-  </div>
-
-  <h5 class="font-bold text-blue-700">3.4.3. Tổn thất trung áp</h5>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div class="h-64 border p-2"><canvas id="loss-mid"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
-  </div>
-
-  <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="loss-low-cum"></canvas></div>
-  </div>
-
-</div>
+	  <section class="mb-8">
+        <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
+        <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="h-64 border p-2"><canvas id="loss-ky"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="loss-ky-cum"></canvas></div>
+        </div>
+        <h5 class="font-bold text-blue-700">3.4.2. Tổn thất đơn vị cấp điện áp</h5>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="h-64 border p-2"><canvas id="loss-cap"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="loss-cap-cum"></canvas></div>
+        </div>
+        <h5 class="font-bold text-blue-700">3.4.3. Tổn thất trung áp</h5>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="h-64 border p-2"><canvas id="loss-mid"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
+        </div>
+        <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="loss-low-cum"></canvas></div>
+        </div>
+      </section>
 
       <section class="mb-8">
-  <h3>4. CÔNG TÁC AN TOÀN (ECP)</h3>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <div class="h-64 border p-2"><canvas id="c-ecp1"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="c-ecp2"></canvas></div>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="h-64 border p-2"><canvas id="c-ecp3"></canvas></div>
-    <div class="h-64 border p-2"><canvas id="c-ecp4"></canvas></div>
-  </div>
-
-</section>
+        <h3>4. CÔNG TÁC AN TOÀN (ECP)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="h-64 border p-2"><canvas id="c-ecp1"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="c-ecp2"></canvas></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="h-64 border p-2"><canvas id="c-ecp3"></canvas></div>
+          <div class="h-64 border p-2"><canvas id="c-ecp4"></canvas></div>
+        </div>
+      </section>
 
       <section class="mb-8">
         <h3>5. CHỈ TIÊU KPI</h3>
@@ -280,6 +230,10 @@
                     <div class="h-64 border p-2"><canvas id="c-kpi-yoy"></canvas></div>
                 </div>
             </div>
+            <div>
+                <h4 class="font-bold text-sm text-center mb-2">Biểu đồ 5.4: Lũy kế KPI các đơn vị năm báo cáo</h4>
+                <div class="h-80 border p-2"><canvas id="c-kpi-year-cum"></canvas></div>
+            </div>
         </div>
         <div id="kpi-debug" class="text-xs text-red-400 mt-2"></div>
       </section>
@@ -297,14 +251,12 @@
   </div>
 
 <script>
-// --- CẤU HÌNH CHART JS ---
 Chart.register(ChartDataLabels);
 Chart.defaults.font.family = "'Times New Roman', serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#000';
 Chart.defaults.maintainAspectRatio = false;
 
-// NOTE: We keep a safe default datalabels formatter here, but createChart accepts a forceInteger flag
 Chart.defaults.set('plugins.datalabels', {
   display: true,
   color: '#000',
@@ -315,27 +267,23 @@ Chart.defaults.set('plugins.datalabels', {
   formatter: (value) => {
     if (value === 0) return '';
     if (value > 1000) return (value / 1000).toFixed(1) + 'k';
-    // default (may be overridden by createChart forceInteger)
     return parseFloat(value).toFixed(2).replace(/\.00$/, '').toLocaleString('vi-VN');
   } 
 });
 
-// GLOBAL STATE
 const state = {
   files: { baocao: null, bckd: null, ecp: null },
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
-  charts: [] // some code pushes charts; createChart stores by id to avoid duplicates
+  charts: [] 
 };
 
-// Colors for charts with multiple categories
 const CHART_COLORS = [
     '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6',
     '#06b6d4', '#f97316', '#14b8a6', '#a855f7', '#fb923c', '#d946ef', '#0ea5e9',
     '#e11d48', '#059669', '#ca8a04', '#7c3aed', '#be185d', '#4f46e5', '#22c3e5'
 ];
 
-// --- KHỞI TẠO ---
 (function init() {
   const selMonth = document.getElementById('sel-month');
   for(let i=1; i<=12; i++) selMonth.add(new Option(i, i));
@@ -351,7 +299,6 @@ const CHART_COLORS = [
   document.getElementById('print-date').innerText = new Date().toLocaleDateString('vi-VN');
 })();
 
-// --- SỰ KIỆN DOM ---
 document.getElementById('btn-apply-period').onclick = () => {
   state.month = parseInt(document.getElementById('sel-month').value);
   state.year = parseInt(document.getElementById('sel-year').value);
@@ -378,7 +325,6 @@ document.getElementById('btn-export-ppt').onclick = () => {
     }
     window.print();
 };
-
 
 const handleFile = (e, key) => {
   const f = e.target.files[0];
@@ -410,12 +356,9 @@ function updateFileStatus() {
   document.getElementById('file-status').innerText = list.length ? "Đã nạp: " + list.join(', ') : "Chưa có file nào.";
 }
 
-// --- MAIN GENERATE FUNCTION ---
 document.getElementById('btn-gen').onclick = () => {
-  // Destroy charts stored as array
   state.charts.forEach(c => { try { c.destroy(); } catch(e){} });
   state.charts = [];
-  // Destroy charts stored by id (safety)
   Object.keys(state.charts).forEach(k => {
     try { if(state.charts[k] && state.charts[k].destroy) state.charts[k].destroy(); } catch(e){}
   });
@@ -432,7 +375,6 @@ document.getElementById('btn-gen').onclick = () => {
   document.getElementById('report-content').scrollIntoView({behavior:'smooth'});
 };
 
-// --- RENDER SECTION 1 (HR) ---
 function renderSection1_HR() {
   const data = state.files.baocao ? (state.files.baocao['CBCNV'] || Object.values(state.files.baocao)[0]) : [];
   if(!data || data.length < 2) return; 
@@ -459,13 +401,11 @@ function renderSection1_HR() {
     const d = String(r[idxDept] || 'Khác').trim();
     deptStats[d] = (deptStats[d] || 0) + 1;
   });
-  // Sử dụng createChart với màu sắc riêng cho từng cột
   createChart('c-age', 'doughnut', ageStats, 'Độ tuổi', true);
   createChart('c-qual', 'bar', qualStats, 'Trình độ', true);
   createChart('c-dept', 'bar', deptStats, 'Bộ phận', true);
 }
 
-// --- RENDER SECTION 2 (Business) ---
 function renderSection2_Business() {
   const container = document.getElementById('bckd-table-area');
   container.innerHTML = '';
@@ -492,9 +432,6 @@ function renderSection2_Business() {
   container.innerHTML = html;
 }
 
-// ========================
-// 3.4 BÁO CÁO TỔN THẤT (Loss) - CẬP NHẬT THEO YÊU CẦU ĐƯỜNG LINE VÀ NHÃN DỮ LIỆU
-// ========================
 function renderLossReport() {
     const mapping = [
         { sheet: "Tổn thất đơn vị kỳ thương phẩm", id: "loss-ky", idCum: "loss-ky-cum" },
@@ -513,12 +450,11 @@ function renderLossReport() {
 
         let curSumC = Array(12).fill(0), curSumD = Array(12).fill(0);
         let lastSumC = Array(12).fill(0), lastSumD = Array(12).fill(0);
-        let planLineG = Array(12).fill(null); // Dữ liệu đường kế hoạch (Cột G) đủ 12 tháng
+        let planLineG = Array(12).fill(null); 
         
-        let barLabels = [];
         let barValuesCur = 0;
         let barValuesLast = 0;
-        let barValuesPlan = 0; // Giá trị cột Kế hoạch tháng hiện tại (Cột F)
+        let barValuesPlan = 0; 
 
         rows.forEach(r => {
             const year = parseInt(r[0]);
@@ -526,10 +462,9 @@ function renderLossReport() {
             const cVal = parseFloat(r[2]) || 0;
             const dVal = parseFloat(r[3]) || 0;
             const loss = parseFloat(r[4]) || 0;
-            const planF = parseFloat(r[5]) || 0; // Cột F: Kế hoạch biểu đồ cột
-            const planG = parseFloat(r[6]) || 0; // Cột G: Kế hoạch biểu đồ đường
+            const planF = parseFloat(r[5]) || 0; 
+            const planG = parseFloat(r[6]) || 0; 
 
-            // Lọc dữ liệu biểu đồ cột cho tháng/năm báo cáo hiện tại
             if (month === state.month) {
                 if (year === currentYear) {
                     barValuesCur = loss;
@@ -539,11 +474,10 @@ function renderLossReport() {
                 }
             }
 
-            // Thu thập dữ liệu Lũy kế cho năm nay và năm trước
             if (year === currentYear) {
                 curSumC[month - 1] = cVal;
                 curSumD[month - 1] = dVal;
-                planLineG[month - 1] = planG; // Lấy kế hoạch vẽ line cho năm báo cáo
+                planLineG[month - 1] = planG; 
             } else if (year === lastYear) {
                 lastSumC[month - 1] = cVal;
                 lastSumD[month - 1] = dVal;
@@ -555,7 +489,6 @@ function renderLossReport() {
         let allValues = []; 
 
         for (let i = 0; i < 12; i++) {
-            // Lũy kế năm hiện tại: Chỉ tính và đẩy dữ liệu nếu tháng i + 1 <= tháng báo cáo
             if (i + 1 <= state.month) {
                 let sC_cur = 0, sD_cur = 0;
                 for (let j = 0; j <= i; j++) { 
@@ -569,7 +502,6 @@ function renderLossReport() {
                 currentYearLine.push(null);
             }
 
-            // Lũy kế năm trước: Luôn hiển thị cả năm (12 tháng)
             let sC_last = 0, sD_last = 0;
             for (let j = 0; j <= i; j++) { 
                 sC_last += lastSumC[j]; 
@@ -579,19 +511,16 @@ function renderLossReport() {
             lastYearLine.push(vLast);
             allValues.push(vLast);
 
-            // Đưa thêm giá trị kế hoạch vào danh sách tính toán trục Y
             if (planLineG[i] !== null) allValues.push(planLineG[i]);
         }
 
-        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA VÀ GIÃN CHIỀU CAO (Tránh đè nhãn dữ liệu)
         let minVal = allValues.length ? Math.min(...allValues.filter(v => v !== null)) : 0;
         let maxVal = allValues.length ? Math.max(...allValues.filter(v => v !== null)) : 10;
         let range = maxVal - minVal;
-        let padding = range * 0.5 || 5; // Tăng biên padding lên 0.5 để tạo không gian giãn chiều cao tốt hơn
+        let padding = range * 0.5 || 5; 
         let yMin = minVal - padding;
         let yMax = maxVal + padding;
 
-        // VẼ BIỂU ĐỒ CỘT (3.4.x bên trái) - BỔ SUNG CỘT KẾ HOẠCH & THU NHỎ CỘT CŨ
         const barCtx = document.getElementById(item.id).getContext('2d');
         const oldBarChart = Chart.getChart(item.id);
         if (oldBarChart) oldBarChart.destroy();
@@ -601,27 +530,9 @@ function renderLossReport() {
             data: {
                 labels: [`Tháng ${state.month}`],
                 datasets: [
-                    {
-                        label: `Cùng kỳ năm ${lastYear}`,
-                        data: [barValuesLast],
-                        backgroundColor: '#2563eb',
-                        barPercentage: 0.5,       
-                        categoryPercentage: 0.6
-                    },
-                    {
-                        label: `Năm ${currentYear}`,
-                        data: [barValuesCur],
-                        backgroundColor: '#ef4444',
-                        barPercentage: 0.5,       
-                        categoryPercentage: 0.6
-                    },
-                    {
-                        label: `Kế hoạch`,
-                        data: [barValuesPlan],
-                        backgroundColor: '#f59e0b', 
-                        barPercentage: 0.5,       
-                        categoryPercentage: 0.6
-                    }
+                    { label: `Cùng kỳ năm ${lastYear}`, data: [barValuesLast], backgroundColor: '#2563eb', barPercentage: 0.5, categoryPercentage: 0.6 },
+                    { label: `Năm ${currentYear}`, data: [barValuesCur], backgroundColor: '#ef4444', barPercentage: 0.5, categoryPercentage: 0.6 },
+                    { label: `Kế hoạch`, data: [barValuesPlan], backgroundColor: '#f59e0b', barPercentage: 0.5, categoryPercentage: 0.6 }
                 ]
             },
             options: {
@@ -639,14 +550,11 @@ function renderLossReport() {
                         formatter: (v) => (v ? v.toFixed(2).replace(".", ",") : '0,00')
                     }
                 },
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: '%' } }
-                }
+                scales: { y: { beginAtZero: true, title: { display: true, text: '%' } } }
             },
             plugins: [ChartDataLabels]
         });
 
-        // VẼ BIỂU ĐỒ LINE (3.4.x bên phải - Lũy kế)
         const lineCtx = document.getElementById(item.idCum).getContext('2d');
         const oldChart = Chart.getChart(item.idCum);
         if (oldChart) oldChart.destroy();
@@ -664,14 +572,7 @@ function renderLossReport() {
                         borderWidth: 2,
                         tension: 0.2,
                         spanGaps: false,
-                        datalabels: { 
-                            align: 'top', 
-                            anchor: 'end', 
-                            color: '#000', 
-                            font: { weight: 'bold', size: 10 },
-                            offset: 6, 
-                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
-                        }
+                        datalabels: { align: 'top', anchor: 'end', color: '#000', font: { weight: 'bold', size: 10 }, offset: 6, formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '') }
                     },
                     {
                         label: `Lũy kế cùng kỳ ${lastYear} (%)`,
@@ -680,14 +581,7 @@ function renderLossReport() {
                         backgroundColor: '#2563eb',
                         borderWidth: 2,
                         tension: 0.2,
-                        datalabels: { 
-                            align: 'top', // YÊU CẦU 1: Đưa nhãn dữ liệu lên TRÊN đường line lũy kế cùng kỳ
-                            anchor: 'end', 
-                            color: '#000', 
-                            font: { weight: 'bold', size: 10 },
-                            offset: 6, 
-                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
-                        }
+                        datalabels: { align: 'top', anchor: 'end', color: '#000', font: { weight: 'bold', size: 10 }, offset: 6, formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '') }
                     },
                     {
                         label: `Kế hoạch năm ${currentYear} (%)`,
@@ -695,16 +589,8 @@ function renderLossReport() {
                         borderColor: '#10b981', 
                         backgroundColor: '#10b981',
                         borderWidth: 2,
-                        // Xóa thuộc tính borderDash để chuyển thành NÉT LIỀN (YÊU CẦU 2)
                         tension: 0.2,
-                        datalabels: { 
-                            align: 'bottom', // YÊU CẦU 2: Đưa giá trị xuống DƯỚI đường line kế hoạch
-                            anchor: 'start', 
-                            color: '#333', 
-                            font: { weight: 'bold', size: 10 },
-                            offset: 6,
-                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
-                        }
+                        datalabels: { align: 'bottom', anchor: 'start', color: '#333', font: { weight: 'bold', size: 10 }, offset: 6, formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '') }
                     }
                 ]
             },
@@ -732,11 +618,9 @@ function renderLossReport() {
     });
 }
 
-// 3. KỸ THUẬT
 function renderSection3_Tech() {
   renderLossReport();
 
-  // 3.1 TBA (yêu cầu: tổng cộng)
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
   const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22']; 
@@ -800,7 +684,6 @@ function renderSection3_Tech() {
     tbaArea.innerHTML = html;
   }
 
-  // 3.2 Dây
   let totalLengthTT = 0;
   const wireInputsTT = ['m-471','m-472','m-473','m-371','m-373']; 
   wireInputsTT.forEach(id=>{ totalLengthTT += parseFloat(document.getElementById(id).value)||0; });
@@ -820,40 +703,29 @@ function renderSection3_Tech() {
     <li class="font-bold text-blue-800">Tụ bù hạ thế: ${document.getElementById('m-tbuht').value} bộ</li>
     </ul>`;
 
-  // 3.3 Sự cố
   const incArea = document.getElementById('incident-list-area');
   incArea.innerHTML = '';
   const incData = state.files.baocao ? (state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố']) : null;
   
   if(incData) {
-    // Chỉ số cột (A=0...)
-    const idxLocation = 2; // C
-    const idxReason = 3;   // D
-    const idxType = 4;     // E
-    const idxDate = 5;     // F
-    const idxNature = 8;   // I
-    const idxLine = 9;     // J
-    const idxMonthYear = 10; // K
+    const idxLocation = 2; const idxReason = 3; const idxType = 4; const idxDate = 5; const idxNature = 8; const idxLine = 9; const idxMonthYear = 10;
 
-    // Lọc sự cố trong tháng hiện tại
     const filteredInc = incData.slice(1).filter(r => {
       let d = null;
       const kValue = r[idxMonthYear];
-      
       if (kValue) {
           if (typeof kValue === 'string') {
               if (kValue.includes('-')) {
-                  const parts = kValue.split('-'); // YYYY-MM-DD
+                  const parts = kValue.split('-');
                   if (parts.length === 3) d = new Date(parts[0], parts[1] - 1, parts[2]);
               } else if (kValue.includes('/')) {
-                  const parts = kValue.split('/'); // DD/MM/YYYY
+                  const parts = kValue.split('/');
                   d = new Date(parts[2], parts[1] - 1, parts[0]);
               }
           } else if (typeof kValue === 'number') {
               d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
           }
       }
-      // fallback cột F
       if (!d && r[idxDate]) {
           const fValue = r[idxDate];
            if (typeof fValue === 'string') {
@@ -866,7 +738,6 @@ function renderSection3_Tech() {
                d = new Date((fValue - (25567 + 2)) * 86400 * 1000);
            }
       }
-
       if(d && !isNaN(d.getTime())) {
         return d.getMonth() + 1 === state.month && d.getFullYear() === state.year;
       }
@@ -881,10 +752,8 @@ function renderSection3_Tech() {
     }
 
     filteredInc.forEach((r, idx) => {
-        // Format ngày
         let rawDate = r[idxMonthYear] || r[idxDate];
         let dateStr = '---';
-        
         let dObj = null;
         if(typeof rawDate === 'number') {
              dObj = new Date((rawDate - (25567 + 2)) * 86400 * 1000);
@@ -892,82 +761,47 @@ function renderSection3_Tech() {
              if(rawDate.includes('-')) {
                  const p = rawDate.split('-'); dObj = new Date(p[0], p[1]-1, p[2]);
              } else if(rawDate.includes('/')) {
-                 const p = rawDate.split(' ')[0].split('/'); 
-                 if(p.length === 3) dObj = new Date(p[2], p[1]-1, p[0]);
+                 const p = rawDate.split(' ')[0].split('/'); if(p.length === 3) dObj = new Date(p[2], p[1]-1, p[0]);
              }
         }
-        
         if(dObj && !isNaN(dObj.getTime())) {
             dateStr = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth()+1).padStart(2,'0')}/${dObj.getFullYear()}`;
         } else {
             dateStr = String(rawDate).substring(0, 10);
         }
 
-        const location = r[idxLocation] || '';
-        const reason = r[idxReason] || '';
-        const nature = r[idxNature] || '';
-        const line = r[idxLine] || '';
-        const type = r[idxType] || '';
-
-        html += `<tr>
-            <td class="text-center">${idx + 1}</td>
-            <td>${dateStr}</td>
-            <td>${line}</td>
-            <td>${location}</td>
-            <td>${reason}</td>
-            <td>${nature}</td>
-            <td>${type}</td>
-        </tr>`;
-
-        // Chart Data (for monthly charts)
+        const location = r[idxLocation] || ''; const reason = r[idxReason] || ''; const nature = r[idxNature] || ''; const line = r[idxLine] || ''; const type = r[idxType] || '';
+        html += `<tr><td class="text-center">${idx + 1}</td><td>${dateStr}</td><td>${line}</td><td>${location}</td><td>${reason}</td><td>${nature}</td><td>${type}</td></tr>`;
         const t = String(type).trim(); if(t) typeStats[t] = (typeStats[t] || 0) + 1;
         const n = String(nature).trim(); if(n) natureStats[n] = (natureStats[n] || 0) + 1;
     });
     html += '</tbody></table>';
     incArea.innerHTML = html;
 
-    // Monthly charts (existing)
     createChart('c-inc-type', 'pie', typeStats, 'Phân loại', true);
     createChart('c-inc-nature', 'bar', natureStats, 'Tính chất', true);
 
-    // =====================
-    // TÍNH & VẼ LŨY KẾ SỰ CỐ
-    // =====================
-    const cumTypeStats = {};
-    const cumNatureStats = {};
-    let totalCum = 0;
+    const cumTypeStats = {}; const cumNatureStats = {}; let totalCum = 0;
 
     incData.slice(1).forEach(r => {
-        let d = null;
-        const kValue = r[idxMonthYear];
+        let d = null; const kValue = r[idxMonthYear];
         if (kValue) {
-            if (typeof kValue === 'number') {
-                d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
-            } else if (typeof kValue === 'string') {
-                if (kValue.includes('-')) {
-                    const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]);
-                } else if (kValue.includes('/')) {
-                    const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]);
-                }
+            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); } 
+            else if (typeof kValue === 'string') {
+                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                else if (kValue.includes('/')) { const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
-        // fallback to idxDate
         if(!d && r[idxDate]) {
             const f = r[idxDate];
-            if(typeof f === 'number') {
-                d = new Date((f - (25567 + 2)) * 86400 * 1000);
-            } else if (typeof f === 'string') {
-                if (f.includes('-')) {
-                    const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]);
-                } else if (f.includes('/')) {
-                    const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]);
-                }
+            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); } 
+            else if (typeof f === 'string') {
+                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                else if (f.includes('/')) { const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
-
         if (d && !isNaN(d.getTime())) {
-            const y = d.getFullYear();
-            const m = d.getMonth() + 1;
+            const y = d.getFullYear(); const m = d.getMonth() + 1;
             if (y === state.year && m <= state.month) {
                 totalCum++;
                 const t = String(r[idxType] || '').trim(); if(t) cumTypeStats[t] = (cumTypeStats[t] || 0) + 1;
@@ -982,206 +816,92 @@ function renderSection3_Tech() {
     createChart('c-inc-type-cum', 'bar', cumTypeStats, 'Lũy kế theo phân loại', true, true);
     createChart('c-inc-nature-cum', 'bar', cumNatureStats, 'Lũy kế theo tính chất', true, true);
 
-// =====================
-// SO SÁNH LŨY KẾ SỰ CỐ CÙNG KỲ
-// =====================
-let totalCumLastYear = 0;
-const lineCumCurrent = {};
-const lineCumLast = {};
+    let totalCumLastYear = 0; const lineCumCurrent = {}; const lineCumLast = {};
 
-// Duyệt lại dữ liệu để tính cùng kỳ
-incData.slice(1).forEach(r => {
-
-    let d = null;
-    const kValue = r[idxMonthYear];
-
-    if (kValue) {
-        if (typeof kValue === 'number') {
-            d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
-        } else if (typeof kValue === 'string') {
-            if (kValue.includes('-')) {
-                const p = kValue.split('-');
-                d = new Date(p[0], p[1]-1, p[2]);
-            } else if (kValue.includes('/')) {
-                const p = kValue.split('/');
-                d = new Date(p[2], p[1]-1, p[0]);
+    incData.slice(1).forEach(r => {
+        let d = null; const kValue = r[idxMonthYear];
+        if (kValue) {
+            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); } 
+            else if (typeof kValue === 'string') {
+                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                else if (kValue.includes('/')) { const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
-    }
-
-    // fallback cột F
-    if(!d && r[idxDate]) {
-        const f = r[idxDate];
-        if(typeof f === 'number') {
-            d = new Date((f - (25567 + 2)) * 86400 * 1000);
-        } else if (typeof f === 'string') {
-            if (f.includes('-')) {
-                const p = f.split('-');
-                d = new Date(p[0], p[1]-1, p[2]);
-            } else if (f.includes('/')) {
-                const p = f.split(' ')[0].split('/');
-                if(p.length===3) {
-                    d = new Date(p[2], p[1]-1, p[0]);
-                }
+        if(!d && r[idxDate]) {
+            const f = r[idxDate];
+            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); } 
+            else if (typeof f === 'string') {
+                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                else if (f.includes('/')) { const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
-    }
-
-    if (d && !isNaN(d.getTime())) {
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        const line = String(r[idxLine] || '').trim();
-
-        // năm hiện tại
-        if (y === state.year && m <= state.month) {
-            if(line) {
-                lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1;
-            }
+        if (d && !isNaN(d.getTime())) {
+            const y = d.getFullYear(); const m = d.getMonth() + 1; const line = String(r[idxLine] || '').trim();
+            if (y === state.year && m <= state.month) { if(line) { lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1; } }
+            if (y === (state.year - 1) && m <= state.month) { totalCumLastYear++; if(line) { lineCumLast[line] = (lineCumLast[line] || 0) + 1; } }
         }
-
-        // cùng kỳ năm trước
-        if (y === (state.year - 1) && m <= state.month) {
-            totalCumLastYear++;
-            if(line) {
-                lineCumLast[line] = (lineCumLast[line] || 0) + 1;
-            }
-        }
-    }
-});
-
-if (cumBox) {
-    cumBox.innerText = `${totalCum} vụ (Cùng kỳ: ${totalCumLastYear} vụ)`;
-}
-
-createChart(
-    'c-inc-yoy',
-    'bar',
-    {
-        [`${state.year - 1}`]: totalCumLastYear,
-        [`${state.year}`]: totalCum
-    },
-    `Lũy kế sự cố đến T${state.month}`,
-    true,
-    true
-);
-
-const allLines = [
-    ...new Set([
-        ...Object.keys(lineCumCurrent),
-        ...Object.keys(lineCumLast)
-    ])
-].sort();
-
-const ctxLine = document.getElementById('c-inc-line-yoy');
-
-if (ctxLine) {
-    const old = Chart.getChart('c-inc-line-yoy');
-    if (old) old.destroy();
-
-    new Chart(ctxLine, {
-        type: 'bar',
-        data: {
-            labels: allLines,
-            datasets: [
-                {
-                    label: `Cùng kỳ ${state.year - 1}`,
-                    data: allLines.map(l => lineCumLast[l] || 0),
-                    backgroundColor: '#3b82f6'
-                },
-                {
-                    label: `Năm ${state.year}`,
-                    data: allLines.map(l => lineCumCurrent[l] || 0),
-                    backgroundColor: '#ef4444'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                datalabels: {
-                    color: '#000',
-                    anchor: 'end',
-                    align: 'top',
-                    formatter: (v) => v > 0 ? v : ''
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            }
-        },
-        plugins: [ChartDataLabels]
     });
-}
-  } else {
-    incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>';
-  }
+
+    if (cumBox) { cumBox.innerText = `${totalCum} vụ (Cùng kỳ: ${totalCumLastYear} vụ)`; }
+
+    createChart('c-inc-yoy', 'bar', { [`${state.year - 1}`]: totalCumLastYear, [`${state.year}`]: totalCum }, `Lũy kế sự cố đến T${state.month}`, true, true);
+
+    const allLines = [ ...new Set([ ...Object.keys(lineCumCurrent), ...Object.keys(lineCumLast) ]) ].sort();
+    const ctxLine = document.getElementById('c-inc-line-yoy');
+
+    if (ctxLine) {
+        const old = Chart.getChart('c-inc-line-yoy'); if (old) old.destroy();
+        new Chart(ctxLine, {
+            type: 'bar',
+            data: {
+                labels: allLines,
+                datasets: [
+                    { label: `Cùng kỳ ${state.year - 1}`, data: allLines.map(l => lineCumLast[l] || 0), backgroundColor: '#3b82f6' },
+                    { label: `Năm ${state.year}`, data: allLines.map(l => lineCumCurrent[l] || 0), backgroundColor: '#ef4444' }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' }, datalabels: { color: '#000', anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v : '' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            },
+            plugins: [ChartDataLabels]
+        });
+    }
+  } else { incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>'; }
 }
 
-// 4. AN TOÀN (ECP)
 function renderSection4_Safety() {
-  const year = state.year;
-  const month = state.month;
-
+  const year = state.year; const month = state.month;
   if (!state.files.ecp) return;
-
   const sheet = Object.values(state.files.ecp)[0];
   if (!sheet || sheet.length < 2) return;
 
-  const rows = sheet.slice(1).filter(r =>
-      Number(r[0]) === year && Number(r[1]) === month
-  );
-
+  const rows = sheet.slice(1).filter(r => Number(r[0]) === year && Number(r[1]) === month );
   if (rows.length === 0) return;
 
-  const plvKH = rows[0][2] || 0;  
-  const plvBS = rows[0][3] || 0;  
-  const plvDX = rows[0][4] || 0;  
-  const hoanHuy = rows[0][5] || 0; 
-
-  createChart("c-ecp1", "pie", {
-      "Kế hoạch": plvKH,
-      "Bổ sung": plvBS,
-      "Đột xuất": plvDX
-  }, "PLV trong tháng", true);
+  const plvKH = rows[0][2] || 0; const plvBS = rows[0][3] || 0; const plvDX = rows[0][4] || 0; const hoanHuy = rows[0][5] || 0; 
+  createChart("c-ecp1", "pie", { "Kế hoạch": plvKH, "Bổ sung": plvBS, "Đột xuất": plvDX }, "PLV trong tháng", true);
 
   const tongPLV = plvKH + plvBS + plvDX;
-  createChart("c-ecp2", "pie", {
-      "Hoãn/Hủy": hoanHuy,
-      "Thực hiện": tongPLV - hoanHuy
-  }, "Tỷ lệ hoãn hủy", true);
+  createChart("c-ecp2", "pie", { "Hoãn/Hủy": hoanHuy, "Thực hiện": tongPLV - hoanHuy }, "Tỷ lệ hoãn hủy", true);
 
   const rowsYear = sheet.slice(1).filter(r => Number(r[0]) === year);
   const sumKH = rowsYear.reduce((a,b) => a + (Number(b[2])||0), 0);
   const sumBS = rowsYear.reduce((a,b) => a + (Number(b[3])||0), 0);
   const sumDX = rowsYear.reduce((a,b) => a + (Number(b[4])||0), 0);
 
-  createChart("c-ecp3", "pie", {
-      "Kế hoạch": sumKH,
-      "Bổ sung": sumBS,
-      "Đột xuất": sumDX
-  }, "PLV lũy kế", true);
+  createChart("c-ecp3", "pie", { "Kế hoạch": sumKH, "Bổ sung": sumBS, "Đột xuất": sumDX }, "PLV lũy kế", true);
 
-  const sumHH = rowsYear.reduce((a,b) => a + (Number(b[5])||0), 0);
-  const tongLuyKe = sumKH + sumBS + sumDX;
-
-  createChart("c-ecp4", "pie", {
-      "Hoãn/Hủy": sumHH,
-      "Thực hiện": tongLuyKe - sumHH
-  }, "Lũy kế hoãn hủy", true);
+  const sumHH = rowsYear.reduce((a,b) => a + (Number(b[5])||0), 0); const tongLuyKe = sumKH + sumBS + sumDX;
+  createChart("c-ecp4", "pie", { "Hoãn/Hủy": sumHH, "Thực hiện": tongLuyKe - sumHH }, "Lũy kế hoãn hủy", true);
 }
 
-// 5. KPI
+// ==========================================
+// 5. SỬA TIÊU CHÍ VÀ THÊM BIỂU ĐỒ KPI 5.4 
+// ==========================================
 function renderSection5_KPI() {
-  ['c-kpi-all', 'c-kpi-cumulative', 'c-kpi-yoy'].forEach(id => {
+  ['c-kpi-all', 'c-kpi-cumulative', 'c-kpi-yoy', 'c-kpi-year-cum'].forEach(id => {
     const c = document.getElementById(id); 
     if(c) { const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
   });
@@ -1205,6 +925,7 @@ function renderSection5_KPI() {
 
   const kpiDataMap = {};
   targetUnits.forEach(unitName => {
+      // FIX LỖI TẠI ĐÂY: Trỏ trực tiếp vào cột tên đơn vị r[idxName] thay vì toàn bộ mảng row r
       const row = currentMonthData.find(r => String(r[idxName]).includes(unitName));
       const val = row ? parseFloat(row[idxVal]) : 0;
       kpiDataMap[unitName] = val;
@@ -1235,22 +956,11 @@ function renderSection5_KPI() {
       indexAxis: 'x', 
       plugins: {
         legend: { display: false },
-        datalabels: { 
-            color: '#000', 
-            anchor: 'end', 
-            align: 'top', 
-            rotation: -90,
-            offset: 0
-        }
+        datalabels: { color: '#000', anchor: 'end', align: 'top', rotation: -90, offset: 0 }
       },
       scales: { 
-          y: { 
-              beginAtZero: false, 
-              min: 80
-          },
-          x: {
-              ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
-          }
+          y: { beginAtZero: false, min: 80 },
+          x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }
       }
     }
   }));
@@ -1270,13 +980,7 @@ function renderSection5_KPI() {
           type: 'line',
           data: {
               labels: dhKpi.map(r => `T${r[idxMonth]}`),
-              datasets: [{
-                  label: 'Lũy kế TB',
-                  data: cumu,
-                  borderColor: '#10b981',
-                  backgroundColor: '#10b981',
-                  tension: 0.1
-              }]
+              datasets: [{ label: 'Lũy kế TB', data: cumu, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.1 }]
           },
           options: { scales: { y: { min: 90 } } }
       }));
@@ -1292,35 +996,91 @@ function renderSection5_KPI() {
       type: 'bar',
       data: {
           labels: [`${state.month}/${lastYear}`, `${state.month}/${state.year}`],
-          datasets: [{
-              label: 'Điểm KPI',
-              data: [lastVal, curVal],
-              backgroundColor: ['#3b82f6', '#dc2626']
-          }]
+          datasets: [{ label: 'Điểm KPI', data: [lastVal, curVal], backgroundColor: ['#3b82f6', '#dc2626'] }]
       },
       options: { scales: { y: { min: 80 } }, plugins: { legend: {display: false} } }
   }));
+
+  // ==========================================
+  // XỬ LÝ DỮ LIỆU VÀ VẼ BIỂU ĐỒ 5.4 THEO YÊU CẦU
+  // ==========================================
+  const yearCumDataMap = {};
+  
+  targetUnits.forEach(unitName => {
+      // Lọc toàn bộ các dòng từ Tháng 1 đến Tháng báo cáo của đơn vị trong năm báo cáo
+      const unitsRowsInYear = data.slice(1).filter(r => {
+          return parseInt(r[idxYear]) === state.year && 
+                 parseInt(r[idxMonth]) >= 1 && 
+                 parseInt(r[idxMonth]) <= state.month && 
+                 String(r[idxName]).includes(unitName);
+      });
+      
+      // Tính SUM cột D (idxVal)
+      const sumKPI = unitsRowsInYear.reduce((acc, curr) => acc + (parseFloat(curr[idxVal]) || 0), 0);
+      
+      // Công thức: Lũy kế TB = SUM / Số tháng báo cáo hiện tại
+      const avgKPI = state.month > 0 ? (sumKPI / state.month) : 0;
+      yearCumDataMap[unitName] = avgKPI;
+  });
+
+  // Sắp xếp dữ liệu theo giá trị giảm dần
+  const sortedYearCum = Object.entries(yearCumDataMap).sort(([,a], [,b]) => b - a);
+  const labels54 = sortedYearCum.map(([unit]) => unit);
+  const values54 = sortedYearCum.map(([,value]) => value);
+  
+  // Tạo màu sắc nổi bật riêng biệt cho Định Hóa
+  const colors54 = labels54.map((unit, index) => {
+      if (unit === 'Định Hóa') return '#dc2626'; // Màu đỏ cho Định Hóa
+      return CHART_COLORS[index % CHART_COLORS.length];
+  });
+
+  const ctx54 = document.getElementById('c-kpi-year-cum').getContext('2d');
+  state.charts.push(new Chart(ctx54, {
+      type: 'bar',
+      data: {
+          labels: labels54,
+          datasets: [{
+              label: `Lũy kế KPI bình quân (T1 -> T${state.month}/${state.year})`,
+              data: values54,
+              backgroundColor: colors54,
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: { display: false },
+              datalabels: {
+                  color: '#000',
+                  anchor: 'end',
+                  align: 'top',
+                  rotation: -90,
+                  offset: 0,
+                  formatter: (v) => (v ? v.toFixed(2).replace(".", ",") : '0,00')
+              }
+          },
+          scales: {
+              y: { beginAtZero: false, min: 80 },
+              x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }
+          }
+      }
+  }));
 }
 
-// 6. OTHER
 function renderSection6_Other() {
   const text = document.getElementById('m-other').value || "(Chưa có nội dung)";
   let html = `<div class="mb-4 whitespace-pre-line">${text}</div>`;
-
   if (manualImages.length > 0) {
       html += `<h4 class="font-bold mt-4 mb-2 text-blue-700">📷 Hình ảnh minh họa:</h4>`;
-
       manualImages.forEach((img) => {
           html += `
               <div class="my-4 border p-2 rounded bg-gray-50" style="text-align:${img.align}">
-                  <img src="${img.src}"
-                       style="width:${img.width}px; border-radius:6px; display:inline-block;" />
+                  <img src="${img.src}" style="width:${img.width}px; border-radius:6px; display:inline-block;" />
                   <div class="mt-1 text-sm italic">${img.caption || "(Không có mô tả)"}</div>
-              </div>
-          `;
+              </div>`;
       });
   }
-
   document.getElementById('other-content').innerHTML = html;
 }
 
@@ -1340,64 +1100,37 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
     else backgroundColor = ['#3b82f6'];
   }
 
-  const dataset = {
-    label: title,
-    data: values,
-    backgroundColor,
-    borderColor: type === 'line' ? '#3b82f6' : '#2563eb',
-    fill: false,
-    tension: 0.2,
-    borderWidth: 1
-  };
-
+  const dataset = { label: title, data: values, backgroundColor, borderColor: type === 'line' ? '#3b82f6' : '#2563eb', fill: false, tension: 0.2, borderWidth: 1 };
   const cfg = {
     type,
     data: { labels, datasets: [dataset] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: title,
-          font: { size: 16 }
-        },
-        legend: {
-          position: type === "pie" || type === "doughnut" ? "bottom" : "top"
-        },
+        title: { display: true, text: title, font: { size: 16 } },
+        legend: { position: type === "pie" || type === "doughnut" ? "bottom" : "top" },
         tooltip: {
           callbacks: {
             label: function(ctx) {
               const raw = Number(ctx.raw);
-              if (forceInteger) {
-                return `${ctx.label}: ${Math.round(raw)}`;
-              }
+              if (forceInteger) return `${ctx.label}: ${Math.round(raw)}`;
               const isCountDistribution = (type === "pie" || type === "doughnut" || id === "c-dept" || id === "c-qual" || id === "c-age");
-              if (isCountDistribution) {
-                return `${ctx.label}: ${Math.round(raw)}`;
-              } else {
-                return `${ctx.label}: ${raw.toFixed(2).replace(".",",")}`;
-              }
+              if (isCountDistribution) return `${ctx.label}: ${Math.round(raw)}`;
+              else return `${ctx.label}: ${raw.toFixed(2).replace(".",",")}`;
             }
           }
         },
         datalabels: {
-          display: showValue,
-          color: "#000",
+          display: showValue, color: "#000",
           anchor: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "center" : "end"),
           align: type === "pie" || type === "doughnut" ? "center" : (type === "line" ? "end" : "top"),
           formatter: function(value, context) {
-              const numValue = Number(value);
-              if (isNaN(numValue)) return '';
+              const numValue = Number(value); if (isNaN(numValue)) return '';
               if (forceInteger) return `${Math.round(numValue)}`;
               const isCountDistribution = (type === "pie" || type === "doughnut" || id === "c-dept" || id === "c-qual" || id === "c-age");
               if (isCountDistribution) {
-                  const total = values.reduce((a,b)=>a+b,0);
-                  const percent = total ? Math.round((numValue/total)*100) : 0;
+                  const total = values.reduce((a,b)=>a+b,0); const percent = total ? Math.round((numValue/total)*100) : 0;
                   return `${Math.round(numValue)} (${percent}%)`;
-              }
-              if (type === 'line' || type === 'bar') {
-                return numValue.toFixed(2).replace(".", ",");
               }
               return numValue.toFixed(2).replace(".", ",");
           },
@@ -1406,8 +1139,7 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
       },
       scales: {
         y: {
-          beginAtZero: true,
-          display: type !== "pie" && type !== "doughnut",
+          beginAtZero: true, display: type !== "pie" && type !== "doughnut",
           ticks: {
             callback: function(value) {
                 if (type === "bar" || type === "line") {
@@ -1424,14 +1156,10 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
 
   try {
     const chart = new Chart(ctxEl, cfg);
-    state.charts.push(chart);
-    state.charts[id] = chart;
-  } catch(e) {
-    console.error('createChart error for', id, e);
-  }
+    state.charts.push(chart); state.charts[id] = chart;
+  } catch(e) { console.error('createChart error for', id, e); }
 }
 
-// --- XUẤT FILE WORD ---
 document.getElementById('btn-export-word').onclick = () => {
     const reportNode = document.getElementById('report-content');
     const headerNode = document.getElementById('report-header'); 
@@ -1440,31 +1168,23 @@ document.getElementById('btn-export-word').onclick = () => {
         const genButton = document.getElementById('btn-gen');
         genButton.textContent = 'Vui lòng TẠO BÁO CÁO trước!';
         genButton.classList.add('animate-pulse');
-        setTimeout(() => {
-            genButton.textContent = 'TẠO BÁO CÁO';
-            genButton.classList.remove('animate-pulse');
-        }, 3000);
+        setTimeout(() => { genButton.textContent = 'TẠO BÁO CÁO'; genButton.classList.remove('animate-pulse'); }, 3000);
         return;
     }
 
     const cloneContent = reportNode.cloneNode(true);
     const cloneHeader = headerNode.cloneNode(true); 
-
     const canvases = reportNode.querySelectorAll('canvas');
     const clonedCanvases = cloneContent.querySelectorAll('canvas');
 
     canvases.forEach((canvas, index) => {
         const imgData = canvas.toDataURL("image/png");
         const img = document.createElement('img');
-        img.src = imgData;
-        img.style.width = '100%';
-        img.style.maxWidth = '600px'; 
+        img.src = imgData; img.style.width = '100%'; img.style.maxWidth = '600px'; 
         clonedCanvases[index].parentNode.replaceChild(img, clonedCanvases[index]);
     });
 
-    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' 
-                          xmlns:w='urn:schemas-microsoft-com:office:word' 
-                          xmlns='http://www.w3.org/TR/REC-html40'>
+    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head><meta charset='utf-8'><title>Báo cáo SXKD</title>
         <style>
             body { font-family: 'Times New Roman', serif; font-size: 13pt; }
@@ -1479,106 +1199,52 @@ document.getElementById('btn-export-word').onclick = () => {
         </head><body>`;
     
     const sourceHTML = header + cloneHeader.innerHTML + "<br><hr><br>" + cloneContent.innerHTML + "</body></html>";
-
-    const blob = new Blob(['\ufeff', sourceHTML], {
-        type: 'application/msword'
-    });
-    
+    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `BaoCao_SXKD_T${state.month}_${state.year}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.href = url; link.download = `BaoCao_SXKD_T${state.month}_${state.year}.doc`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 };
 
-// XUẤT PDF
-document.getElementById('btn-export-pdf').onclick = () => {
-    window.print();
-};
+document.getElementById('btn-export-pdf').onclick = () => { window.print(); };
 
-// ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
 let manualImages = []; 
-
 document.getElementById("manual-images").addEventListener("change", function (e) {
     const files = Array.from(e.target.files);
-
     files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(evt) {
-            manualImages.push({
-                src: evt.target.result,
-                caption: "",
-                align: "center",
-                width: 400
-            });
+            manualImages.push({ src: evt.target.result, caption: "", align: "center", width: 400 });
             renderManualImages();
         };
         reader.readAsDataURL(file);
     });
-
     e.target.value = "";
 });
 
 function renderManualImages() {
-    const box = document.getElementById("manual-image-preview");
-    box.innerHTML = "";
-
+    const box = document.getElementById("manual-image-preview"); box.innerHTML = "";
     manualImages.forEach((obj, index) => {
-        const div = document.createElement("div");
-        div.className = "border rounded p-2 bg-white shadow";
-
+        const div = document.createElement("div"); div.className = "border rounded p-2 bg-white shadow";
         div.innerHTML = `
-            <img src="${obj.src}"
-                 style="width:${obj.width}px; display:block; margin:auto;">
-
-            <textarea 
-                class="w-full border rounded p-1 mt-2 text-sm"
-                placeholder="Nhập mô tả ảnh..."
-                oninput="updateManualCaption(${index}, this.value)"
-            >${obj.caption}</textarea>
-
+            <img src="${obj.src}" style="width:${obj.width}px; display:block; margin:auto;">
+            <textarea class="w-full border rounded p-1 mt-2 text-sm" placeholder="Nhập mô tả ảnh..." oninput="updateManualCaption(${index}, this.value)">${obj.caption}</textarea>
             <div class="flex items-center gap-1 mt-2 text-xs">
                 <button onclick="updateImageAlign(${index}, 'left')" class="px-2 py-1 bg-gray-200 rounded">⬅️ Trái</button>
                 <button onclick="updateImageAlign(${index}, 'center')" class="px-2 py-1 bg-gray-200 rounded">🔳 Giữa</button>
                 <button onclick="updateImageAlign(${index}, 'right')" class="px-2 py-1 bg-gray-200 rounded">➡️ Phải</button>
             </div>
-
             <label class="text-xs mt-2 block">Kích thước (px):</label>
-            <input type="number" min="100" max="1200"
-                   value="${obj.width}"
-                   oninput="updateImageWidth(${index}, this.value)"
-                   class="w-full border rounded px-1 py-1 text-sm mt-1"/>
-
-            <button onclick="deleteManualImage(${index})"
-                class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">
-                Xóa ảnh
-            </button>
+            <input type="number" min="100" max="1200" value="${obj.width}" oninput="updateImageWidth(${index}, this.value)" class="w-full border rounded px-1 py-1 text-sm mt-1"/>
+            <button onclick="deleteManualImage(${index})" class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">Xóa ảnh</button>
         `;
-
         box.appendChild(div);
     });
 }
-
-function updateManualCaption(i, text) {
-    manualImages[i].caption = text;
-}
-
-function updateImageAlign(i, align) {
-    manualImages[i].align = align;
-    renderManualImages();
-}
-
-function updateImageWidth(i, width) {
-    manualImages[i].width = Number(width);
-    renderManualImages();
-}
-
-function deleteManualImage(i) {
-    manualImages.splice(i, 1);
-    renderManualImages();
-}
+function updateManualCaption(i, text) { manualImages[i].caption = text; }
+function updateImageAlign(i, align) { manualImages[i].align = align; renderManualImages(); }
+function updateImageWidth(i, width) { manualImages[i].width = Number(width); renderManualImages(); }
+function deleteManualImage(i) { manualImages.splice(i, 1); renderManualImages(); }
 </script>
 </body>
 </html>
