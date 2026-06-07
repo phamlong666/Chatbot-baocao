@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Báo Cáo SXKD - Điện lực Định Hóa</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- ChartJS & Plugins -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <!-- Excel processing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
   <style>
@@ -51,7 +49,6 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-7xl mx-auto">
-    <!-- HEADER: Sẽ được đưa vào Word -->
     <div class="card flex justify-between items-start bg-white" id="report-header">
       <div style="text-align: left;">
         <h2 style="font-size: 12pt; font-weight: bold; margin: 0;">CÔNG TY ĐIỆN LỰC THÁI NGUYÊN</h2>
@@ -63,10 +60,8 @@
       </div>
     </div>
 
-    <!-- CONTROLS AREA -->
     <div class="card hidden-print space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- File Uploads -->
         <div class="space-y-2">
           <p class="font-bold text-sm text-gray-700">1. Nạp dữ liệu đầu vào:</p>
           <div class="flex flex-wrap gap-2">
@@ -88,7 +83,6 @@
           <div id="file-status" class="text-xs text-gray-500 italic mt-1">Chưa có file nào được chọn.</div>
         </div>
 
-        <!-- Month/Year Selection -->
         <div class="space-y-2 border-l pl-4 border-gray-200">
           <p class="font-bold text-sm text-gray-700">2. Chọn kỳ báo cáo (Quan trọng):</p>
           <div class="flex items-center gap-3">
@@ -108,7 +102,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="flex flex-wrap gap-2 border-t pt-4 mt-2">
         <button id="btn-manual" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Nhập tay số liệu </button>
         <div class="flex-grow"></div>
@@ -118,7 +111,6 @@
         <button id="btn-export-word" class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded text-sm font-bold">
           Xuất file Word
         </button>
-        <!-- Thay thế nút Powerpoint bằng nút Xuất PDF/Ảnh (Presentation) -->
         <button id="btn-export-ppt" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold" title="Sử dụng chức năng In của trình duyệt để tạo PDF hoặc ảnh chất lượng cao để trình bày">
           Xuất PDF/Ảnh (Presentation)
         </button>
@@ -128,11 +120,8 @@
       </div>
     </div>
 
-    <!-- MANUAL INPUT SECTION -->
     <div id="manual-area" class="card hidden hidden-print">
       <h3 class="font-bold text-gray-700 mb-2">Nhập tay chiều dài/tiết diện dây (Đơn vị: km):</h3>
-      <!-- Bổ sung thêm Đường dây hạ thế -->
-      <!-- Tổng chiều dài sẽ được tính toán lại trong JS (Chỉ tính trung thế) -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <input id="m-total" placeholder="Tổng chiều dài TT (km)" class="border p-2 rounded text-sm" value="">
         <input id="m-471" placeholder="471 E6.22 (km)" class="border p-2 rounded text-sm" value="64.61">
@@ -156,17 +145,14 @@
       ➕ Tải ảnh
   </button>
 
-  <!-- Hiển thị danh sách ảnh -->
   <div id="manual-image-preview"
        class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
   </div>
 </div>
     </div>
 
-    <!-- REPORT CONTENT AREA -->
     <div id="report-content" class="min-h-screen hidden bg-white p-4">
       
-      <!-- 1. QUẢN TRỊ -->
       <section class="mb-8">
         <h3>1. CÔNG TÁC QUẢN TRỊ</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -176,45 +162,37 @@
         </div>
       </section>
 
-      <!-- 2. KINH DOANH -->
       <section class="mb-8">
         <h3>2. CÔNG TÁC KINH DOANH & DVKH</h3>
         <div id="bckd-table-area" class="overflow-x-auto mb-4"></div>
       </section>
 
-      <!-- 3. KỸ THUẬT -->
       <section class="mb-8">
         <h3>3. CÔNG TÁC QUẢN LÝ KỸ THUẬT</h3>
         
-        <!-- 3.1 TBA -->
         <div class="mb-6">
           <h4 class="font-bold text-black mb-2">3.1. Số liệu Trạm biến áp (Tổng hợp theo đường dây)</h4>
           <div id="tba-summary-area" class="overflow-x-auto"></div>
         </div>
 
-        <!-- 3.2 Dây -->
         <div class="mb-6">
           <h4 class="font-bold text-black mb-2">3.2. Tổng chiều dài đường dây trung thế</h4>
           <div id="wire-summary" class="bg-gray-50 p-3 border text-sm"></div>
         </div>
 
-        <!-- 3.3 Sự cố -->
         <div>
   <h4 class="font-bold text-black mb-2">3.3. Tình hình sự cố</h4>
 
-  <!-- Biểu đồ tháng -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div class="h-64 border p-2"><canvas id="c-inc-type"></canvas></div>
     <div class="h-64 border p-2"><canvas id="c-inc-nature"></canvas></div>
   </div>
 
-  <!-- Ô lũy kế -->
   <div id="incident-cumulative-box" class="p-3 mb-4 bg-yellow-100 border border-yellow-500 text-black font-bold text-center">
       Lũy kế sự cố: <span id="incident-cum-value">0</span> vụ
   </div>
 
-  <!-- Biểu đồ lũy kế -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div class="h-64 border p-2">
         <canvas id="c-inc-type-cum"></canvas>
     </div>
@@ -224,7 +202,6 @@
     </div>
 </div>
 
-<!-- Biểu đồ so sánh cùng kỳ -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 
     <div class="h-72 border p-2">
@@ -242,32 +219,27 @@
 </div>
 </section>
 	
-	<!-- 3.4 BÁO CÁO TỔN THẤT -->
-<div class="mb-6">
+	<div class="mb-6">
   <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
 
-  <!-- 3.4.1 -->
   <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="h-64 border p-2"><canvas id="loss-ky"></canvas></div>
     <div class="h-64 border p-2"><canvas id="loss-ky-cum"></canvas></div>
   </div>
 
-  <!-- 3.4.2 -->
   <h5 class="font-bold text-blue-700">3.4.2. Tổn thất đơn vị cấp điện áp</h5>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="h-64 border p-2"><canvas id="loss-cap"></canvas></div>
     <div class="h-64 border p-2"><canvas id="loss-cap-cum"></canvas></div>
   </div>
 
-  <!-- 3.4.3 -->
   <h5 class="font-bold text-blue-700">3.4.3. Tổn thất trung áp</h5>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="h-64 border p-2"><canvas id="loss-mid"></canvas></div>
     <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
   </div>
 
-  <!-- 3.4.4 -->
   <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
@@ -276,17 +248,14 @@
 
 </div>
 
-      <!-- 4. AN TOÀN -->
-<section class="mb-8">
+      <section class="mb-8">
   <h3>4. CÔNG TÁC AN TOÀN (ECP)</h3>
 
-  <!-- Hàng 1: PLV tháng + Tỷ lệ hoãn hủy -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div class="h-64 border p-2"><canvas id="c-ecp1"></canvas></div>
     <div class="h-64 border p-2"><canvas id="c-ecp2"></canvas></div>
   </div>
 
-  <!-- Hàng 2: PLV lũy kế + Lũy kế hoãn hủy -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="h-64 border p-2"><canvas id="c-ecp3"></canvas></div>
     <div class="h-64 border p-2"><canvas id="c-ecp4"></canvas></div>
@@ -294,7 +263,6 @@
 
 </section>
 
-      <!-- 5. KPI -->
       <section class="mb-8">
         <h3>5. CHỈ TIÊU KPI</h3>
         <div class="grid grid-cols-1 gap-6">
@@ -316,7 +284,6 @@
         <div id="kpi-debug" class="text-xs text-red-400 mt-2"></div>
       </section>
 
-      <!-- 6. KHÁC -->
       <section class="mb-8">
         <h3>6. CÁC CÔNG TÁC KHÁC</h3>
         <div id="other-content" class="text-sm whitespace-pre-line text-gray-700"></div>
@@ -526,7 +493,7 @@ function renderSection2_Business() {
 }
 
 // ========================
-// 3.3 BÁO CÁO TỔN THẤT (Loss) - CẬP NHẬT XỬ LÝ GIÁ TRỊ ÂM & CÂN ĐỐI TRỤC Y
+// 3.4 BÁO CÁO TỔN THẤT (Loss) - CẬP NHẬT THEO YÊU CẦU ĐƯỜNG LINE VÀ NHÃN DỮ LIỆU
 // ========================
 function renderLossReport() {
     const mapping = [
@@ -546,9 +513,12 @@ function renderLossReport() {
 
         let curSumC = Array(12).fill(0), curSumD = Array(12).fill(0);
         let lastSumC = Array(12).fill(0), lastSumD = Array(12).fill(0);
+        let planLineG = Array(12).fill(null); // Dữ liệu đường kế hoạch (Cột G) đủ 12 tháng
         
         let barLabels = [];
-        let barValues = [];
+        let barValuesCur = 0;
+        let barValuesLast = 0;
+        let barValuesPlan = 0; // Giá trị cột Kế hoạch tháng hiện tại (Cột F)
 
         rows.forEach(r => {
             const year = parseInt(r[0]);
@@ -556,15 +526,24 @@ function renderLossReport() {
             const cVal = parseFloat(r[2]) || 0;
             const dVal = parseFloat(r[3]) || 0;
             const loss = parseFloat(r[4]) || 0;
+            const planF = parseFloat(r[5]) || 0; // Cột F: Kế hoạch biểu đồ cột
+            const planG = parseFloat(r[6]) || 0; // Cột G: Kế hoạch biểu đồ đường
 
+            // Lọc dữ liệu biểu đồ cột cho tháng/năm báo cáo hiện tại
             if (month === state.month) {
-                barLabels.push(year.toString());
-                barValues.push(loss);
+                if (year === currentYear) {
+                    barValuesCur = loss;
+                    barValuesPlan = planF; 
+                } else if (year === lastYear) {
+                    barValuesLast = loss;
+                }
             }
 
+            // Thu thập dữ liệu Lũy kế cho năm nay và năm trước
             if (year === currentYear) {
                 curSumC[month - 1] = cVal;
                 curSumD[month - 1] = dVal;
+                planLineG[month - 1] = planG; // Lấy kế hoạch vẽ line cho năm báo cáo
             } else if (year === lastYear) {
                 lastSumC[month - 1] = cVal;
                 lastSumD[month - 1] = dVal;
@@ -587,7 +566,6 @@ function renderLossReport() {
                 currentYearLine.push(vCur);
                 allValues.push(vCur);
             } else {
-                // Các tháng sau tháng báo cáo trong năm hiện tại sẽ là null để không vẽ line
                 currentYearLine.push(null);
             }
 
@@ -600,18 +578,73 @@ function renderLossReport() {
             let vLast = sC_last !== 0 ? (sD_last / sC_last) * 100 : 0;
             lastYearLine.push(vLast);
             allValues.push(vLast);
+
+            // Đưa thêm giá trị kế hoạch vào danh sách tính toán trục Y
+            if (planLineG[i] !== null) allValues.push(planLineG[i]);
         }
 
-        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA
+        // TÍNH TOÁN THANG ĐO ĐỂ ĐƯỜNG LINE NẰM GIỮA VÀ GIÃN CHIỀU CAO (Tránh đè nhãn dữ liệu)
         let minVal = allValues.length ? Math.min(...allValues.filter(v => v !== null)) : 0;
         let maxVal = allValues.length ? Math.max(...allValues.filter(v => v !== null)) : 10;
         let range = maxVal - minVal;
-        let padding = range * 0.3 || 5; 
+        let padding = range * 0.5 || 5; // Tăng biên padding lên 0.5 để tạo không gian giãn chiều cao tốt hơn
         let yMin = minVal - padding;
         let yMax = maxVal + padding;
 
-        // VẼ BIỂU ĐỒ CỘT (3.4.x bên trái)
-        createChart(item.id, "bar", Object.fromEntries(barLabels.map((y, i) => [y, barValues[i]])), "Tỷ lệ tổn thất tháng " + state.month, true);
+        // VẼ BIỂU ĐỒ CỘT (3.4.x bên trái) - BỔ SUNG CỘT KẾ HOẠCH & THU NHỎ CỘT CŨ
+        const barCtx = document.getElementById(item.id).getContext('2d');
+        const oldBarChart = Chart.getChart(item.id);
+        if (oldBarChart) oldBarChart.destroy();
+
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: [`Tháng ${state.month}`],
+                datasets: [
+                    {
+                        label: `Cùng kỳ năm ${lastYear}`,
+                        data: [barValuesLast],
+                        backgroundColor: '#2563eb',
+                        barPercentage: 0.5,       
+                        categoryPercentage: 0.6
+                    },
+                    {
+                        label: `Năm ${currentYear}`,
+                        data: [barValuesCur],
+                        backgroundColor: '#ef4444',
+                        barPercentage: 0.5,       
+                        categoryPercentage: 0.6
+                    },
+                    {
+                        label: `Kế hoạch`,
+                        data: [barValuesPlan],
+                        backgroundColor: '#f59e0b', 
+                        barPercentage: 0.5,       
+                        categoryPercentage: 0.6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: "Tỷ lệ tổn thất tháng " + state.month, font: { size: 14 } },
+                    legend: { display: true, position: 'bottom' },
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        anchor: 'end',
+                        align: 'top',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: (v) => (v ? v.toFixed(2).replace(".", ",") : '0,00')
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: '%' } }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
 
         // VẼ BIỂU ĐỒ LINE (3.4.x bên phải - Lũy kế)
         const lineCtx = document.getElementById(item.idCum).getContext('2d');
@@ -630,14 +663,14 @@ function renderLossReport() {
                         backgroundColor: '#ef4444',
                         borderWidth: 2,
                         tension: 0.2,
-                        spanGaps: false, // Quan trọng: Không nối các điểm null
+                        spanGaps: false,
                         datalabels: { 
                             align: 'top', 
                             anchor: 'end', 
                             color: '#000', 
                             font: { weight: 'bold', size: 10 },
-                            offset: 4,
-                            formatter: (v) => (v !== null ? v.toFixed(2) : '')
+                            offset: 6, 
+                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
                         }
                     },
                     {
@@ -648,12 +681,29 @@ function renderLossReport() {
                         borderWidth: 2,
                         tension: 0.2,
                         datalabels: { 
-                            align: 'bottom', 
-                            anchor: 'start', 
+                            align: 'top', // YÊU CẦU 1: Đưa nhãn dữ liệu lên TRÊN đường line lũy kế cùng kỳ
+                            anchor: 'end', 
                             color: '#000', 
                             font: { weight: 'bold', size: 10 },
-                            offset: 4,
-                            formatter: (v) => (v !== null ? v.toFixed(2) : '')
+                            offset: 6, 
+                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
+                        }
+                    },
+                    {
+                        label: `Kế hoạch năm ${currentYear} (%)`,
+                        data: planLineG,
+                        borderColor: '#10b981', 
+                        backgroundColor: '#10b981',
+                        borderWidth: 2,
+                        // Xóa thuộc tính borderDash để chuyển thành NÉT LIỀN (YÊU CẦU 2)
+                        tension: 0.2,
+                        datalabels: { 
+                            align: 'bottom', // YÊU CẦU 2: Đưa giá trị xuống DƯỚI đường line kế hoạch
+                            anchor: 'start', 
+                            color: '#333', 
+                            font: { weight: 'bold', size: 10 },
+                            offset: 6,
+                            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") : '')
                         }
                     }
                 ]
@@ -881,14 +931,12 @@ function renderSection3_Tech() {
     createChart('c-inc-nature', 'bar', natureStats, 'Tính chất', true);
 
     // =====================
-    // TÍNH & VẼ LŨY KẾ SỰ CỐ (Đặt ở đây - trong scope renderSection3_Tech)
+    // TÍNH & VẼ LŨY KẾ SỰ CỐ
     // =====================
-    // Lũy kế trong năm (tính theo tháng 1..state.month)
     const cumTypeStats = {};
     const cumNatureStats = {};
     let totalCum = 0;
 
-    // iterate through all rows and count those with year == state.year and month <= state.month
     incData.slice(1).forEach(r => {
         let d = null;
         const kValue = r[idxMonthYear];
@@ -928,20 +976,16 @@ function renderSection3_Tech() {
         }
     });
 
-    // Show total in the yellow box as integer
     const cumBox = document.getElementById('incident-cum-value');
     if (cumBox) cumBox.innerText = totalCum;
 
-    // Create the two cumulative charts (force integer labels)
     createChart('c-inc-type-cum', 'bar', cumTypeStats, 'Lũy kế theo phân loại', true, true);
     createChart('c-inc-nature-cum', 'bar', cumNatureStats, 'Lũy kế theo tính chất', true, true);
 
 // =====================
 // SO SÁNH LŨY KẾ SỰ CỐ CÙNG KỲ
 // =====================
-
 let totalCumLastYear = 0;
-
 const lineCumCurrent = {};
 const lineCumLast = {};
 
@@ -952,20 +996,13 @@ incData.slice(1).forEach(r => {
     const kValue = r[idxMonthYear];
 
     if (kValue) {
-
         if (typeof kValue === 'number') {
-
             d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
-
         } else if (typeof kValue === 'string') {
-
             if (kValue.includes('-')) {
-
                 const p = kValue.split('-');
                 d = new Date(p[0], p[1]-1, p[2]);
-
             } else if (kValue.includes('/')) {
-
                 const p = kValue.split('/');
                 d = new Date(p[2], p[1]-1, p[0]);
             }
@@ -974,24 +1011,15 @@ incData.slice(1).forEach(r => {
 
     // fallback cột F
     if(!d && r[idxDate]) {
-
         const f = r[idxDate];
-
         if(typeof f === 'number') {
-
             d = new Date((f - (25567 + 2)) * 86400 * 1000);
-
         } else if (typeof f === 'string') {
-
             if (f.includes('-')) {
-
                 const p = f.split('-');
                 d = new Date(p[0], p[1]-1, p[2]);
-
             } else if (f.includes('/')) {
-
                 const p = f.split(' ')[0].split('/');
-
                 if(p.length===3) {
                     d = new Date(p[2], p[1]-1, p[0]);
                 }
@@ -1000,15 +1028,12 @@ incData.slice(1).forEach(r => {
     }
 
     if (d && !isNaN(d.getTime())) {
-
         const y = d.getFullYear();
         const m = d.getMonth() + 1;
-
         const line = String(r[idxLine] || '').trim();
 
         // năm hiện tại
         if (y === state.year && m <= state.month) {
-
             if(line) {
                 lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1;
             }
@@ -1016,9 +1041,7 @@ incData.slice(1).forEach(r => {
 
         // cùng kỳ năm trước
         if (y === (state.year - 1) && m <= state.month) {
-
             totalCumLastYear++;
-
             if(line) {
                 lineCumLast[line] = (lineCumLast[line] || 0) + 1;
             }
@@ -1026,12 +1049,10 @@ incData.slice(1).forEach(r => {
     }
 });
 
-// cập nhật ô lũy kế
 if (cumBox) {
     cumBox.innerText = `${totalCum} vụ (Cùng kỳ: ${totalCumLastYear} vụ)`;
 }
 
-// Biểu đồ tổng lũy kế
 createChart(
     'c-inc-yoy',
     'bar',
@@ -1044,7 +1065,6 @@ createChart(
     true
 );
 
-// Biểu đồ đường dây
 const allLines = [
     ...new Set([
         ...Object.keys(lineCumCurrent),
@@ -1055,18 +1075,13 @@ const allLines = [
 const ctxLine = document.getElementById('c-inc-line-yoy');
 
 if (ctxLine) {
-
     const old = Chart.getChart('c-inc-line-yoy');
-
     if (old) old.destroy();
 
     new Chart(ctxLine, {
-
         type: 'bar',
-
         data: {
             labels: allLines,
-
             datasets: [
                 {
                     label: `Cùng kỳ ${state.year - 1}`,
@@ -1080,17 +1095,13 @@ if (ctxLine) {
                 }
             ]
         },
-
         options: {
             responsive: true,
             maintainAspectRatio: false,
-
             plugins: {
-
                 legend: {
                     position: 'bottom'
                 },
-
                 datalabels: {
                     color: '#000',
                     anchor: 'end',
@@ -1098,7 +1109,6 @@ if (ctxLine) {
                     formatter: (v) => v > 0 ? v : ''
                 }
             },
-
             scales: {
                 y: {
                     beginAtZero: true,
@@ -1108,11 +1118,9 @@ if (ctxLine) {
                 }
             }
         },
-
         plugins: [ChartDataLabels]
     });
 }
-
   } else {
     incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>';
   }
@@ -1120,7 +1128,6 @@ if (ctxLine) {
 
 // 4. AN TOÀN (ECP)
 function renderSection4_Safety() {
-
   const year = state.year;
   const month = state.month;
 
@@ -1135,29 +1142,24 @@ function renderSection4_Safety() {
 
   if (rows.length === 0) return;
 
-  // Lấy dữ liệu theo yêu cầu
-  const plvKH = rows[0][2] || 0;  // C
-  const plvBS = rows[0][3] || 0;  // D
-  const plvDX = rows[0][4] || 0;  // E
-  const hoanHuy = rows[0][5] || 0; // F
+  const plvKH = rows[0][2] || 0;  
+  const plvBS = rows[0][3] || 0;  
+  const plvDX = rows[0][4] || 0;  
+  const hoanHuy = rows[0][5] || 0; 
 
-  // 1. PLV trong tháng
   createChart("c-ecp1", "pie", {
       "Kế hoạch": plvKH,
       "Bổ sung": plvBS,
       "Đột xuất": plvDX
   }, "PLV trong tháng", true);
 
-  // 2. Tỷ lệ hoãn hủy
   const tongPLV = plvKH + plvBS + plvDX;
   createChart("c-ecp2", "pie", {
       "Hoãn/Hủy": hoanHuy,
       "Thực hiện": tongPLV - hoanHuy
   }, "Tỷ lệ hoãn hủy", true);
 
-  // 3. PLV lũy kế
   const rowsYear = sheet.slice(1).filter(r => Number(r[0]) === year);
-
   const sumKH = rowsYear.reduce((a,b) => a + (Number(b[2])||0), 0);
   const sumBS = rowsYear.reduce((a,b) => a + (Number(b[3])||0), 0);
   const sumDX = rowsYear.reduce((a,b) => a + (Number(b[4])||0), 0);
@@ -1168,7 +1170,6 @@ function renderSection4_Safety() {
       "Đột xuất": sumDX
   }, "PLV lũy kế", true);
 
-  // 4. Lũy kế hoãn hủy
   const sumHH = rowsYear.reduce((a,b) => a + (Number(b[5])||0), 0);
   const tongLuyKe = sumKH + sumBS + sumDX;
 
@@ -1176,7 +1177,6 @@ function renderSection4_Safety() {
       "Hoãn/Hủy": sumHH,
       "Thực hiện": tongLuyKe - sumHH
   }, "Lũy kế hoãn hủy", true);
-
 }
 
 // 5. KPI
@@ -1255,7 +1255,6 @@ function renderSection5_KPI() {
     }
   }));
 
-  // KPI cumulative for Định Hóa
   const dhKpi = data.slice(1).filter(r => {
     return parseInt(r[idxYear]) === state.year && String(r[idxName]).includes('Định Hóa') && parseInt(r[idxMonth]) <= state.month;
   }).sort((a,b) => parseInt(a[idxMonth]) - parseInt(b[idxMonth]));
@@ -1324,10 +1323,10 @@ function renderSection6_Other() {
 
   document.getElementById('other-content').innerHTML = html;
 }
+
 function createChart(id, type, dataObj, title, showValue = true, forceInteger = false) { 
   const ctxEl = document.getElementById(id);
   if (!ctxEl) return;
-  // If there is a chart stored under this id, destroy it
   try { if(state.charts[id] && state.charts[id].destroy) state.charts[id].destroy(); } catch(e){}
 
   const labels = Object.keys(dataObj);
@@ -1337,7 +1336,6 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
   if (type === 'pie' || type === 'doughnut') {
     backgroundColor = labels.map((_,i)=>CHART_COLORS[i % CHART_COLORS.length]);
   } else {
-    // For bar/line: if multiple labels use colors array, else single color
     if (labels.length > 1) backgroundColor = labels.map((_,i)=>CHART_COLORS[i % CHART_COLORS.length]);
     else backgroundColor = ['#3b82f6'];
   }
@@ -1374,7 +1372,6 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
               if (forceInteger) {
                 return `${ctx.label}: ${Math.round(raw)}`;
               }
-              // determine if this is a count distribution (pie/doughnut or c-age/c-dept/c-qual)
               const isCountDistribution = (type === "pie" || type === "doughnut" || id === "c-dept" || id === "c-qual" || id === "c-age");
               if (isCountDistribution) {
                 return `${ctx.label}: ${Math.round(raw)}`;
@@ -1414,7 +1411,6 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
           ticks: {
             callback: function(value) {
                 if (type === "bar" || type === "line") {
-                    // If forceInteger, show integer ticks if values are integer-like
                     if (forceInteger) return `${Math.round(Number(value))}`;
                     return Number(value).toFixed(1).replace(/\.0$/, '').replace(".", ",");
                 }
@@ -1426,10 +1422,8 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
     }
   };
 
-  // create and store
   try {
     const chart = new Chart(ctxEl, cfg);
-    // store under both array and id for compatibility
     state.charts.push(chart);
     state.charts[id] = chart;
   } catch(e) {
@@ -1456,7 +1450,6 @@ document.getElementById('btn-export-word').onclick = () => {
     const cloneContent = reportNode.cloneNode(true);
     const cloneHeader = headerNode.cloneNode(true); 
 
-    // Convert Canvas to Images in Clone
     const canvases = reportNode.querySelectorAll('canvas');
     const clonedCanvases = cloneContent.querySelectorAll('canvas');
 
@@ -1469,7 +1462,6 @@ document.getElementById('btn-export-word').onclick = () => {
         clonedCanvases[index].parentNode.replaceChild(img, clonedCanvases[index]);
     });
 
-    // Tạo HTML cho Word, ghép Header vào trước Content
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' 
                           xmlns:w='urn:schemas-microsoft-com:office:word' 
                           xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1504,11 +1496,10 @@ document.getElementById('btn-export-word').onclick = () => {
 // XUẤT PDF
 document.getElementById('btn-export-pdf').onclick = () => {
     window.print();
-};  // <-- đóng hàm và đóng dấu } đầy đủ
+};
 
 // ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
-// ====== QUẢN LÝ ẢNH & MÔ TẢ MỤC 6 ======
-let manualImages = []; // [{src, caption, align, width}]
+let manualImages = []; 
 
 document.getElementById("manual-images").addEventListener("change", function (e) {
     const files = Array.from(e.target.files);
