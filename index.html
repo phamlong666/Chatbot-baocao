@@ -199,9 +199,22 @@
           <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
         </div>
         <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
           <div class="h-64 border p-2"><canvas id="loss-low-cum"></canvas></div>
+        </div>
+        
+        <h5 class="font-bold text-blue-700 mb-2">3.4.5. Tìm TBA công cộng</h5>
+        <div class="bg-gray-50 border p-4 rounded mb-4 hidden-print">
+          <div class="relative w-full max-w-md">
+            <label class="block text-sm font-bold text-gray-700 mb-1">Nhập tên Trạm biến áp để tìm kiếm:</label>
+            <input type="text" id="search-tba-input" placeholder="Ví dụ: Bình Thành 6..." class="w-full border p-2 rounded text-sm" autocomplete="off">
+            <div id="search-tba-suggestions" class="absolute left-0 right-0 mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto z-50 hidden"></div>
+          </div>
+        </div>
+        <div id="tba-chart-box" class="hidden">
+          <div class="p-2 border rounded bg-white text-center font-bold text-blue-900 mb-2" id="tba-chart-title">Biểu đồ tổn thất TBA</div>
+          <div class="h-80 border p-2 bg-white"><canvas id="loss-tba-public-line"></canvas></div>
         </div>
       </section>
 
@@ -279,7 +292,7 @@ const state = {
   files: { baocao: null, bckd: null, ecp: null },
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
-  charts: [] 
+  charts: {} 
 };
 
 const CHART_COLORS = [
@@ -309,6 +322,11 @@ document.getElementById('btn-apply-period').onclick = () => {
   document.getElementById('display-period').innerText = `Tháng ${state.month} Năm ${state.year}`;
   const statusEl = document.getElementById('file-status');
   statusEl.innerHTML = `<span class="text-blue-600 font-bold">Đã chọn: T${state.month}/${state.year}. Nhấn "TẠO BÁO CÁO".</span>`;
+  
+  const currentSearch = document.getElementById('search-tba-input').value.trim();
+  if(currentSearch && state.files.baocao) {
+     drawTbaChart(currentSearch);
+  }
 };
 
 document.getElementById('btn-manual').onclick = () => {
@@ -343,6 +361,10 @@ const handleFile = (e, key) => {
     });
     state.files[key] = json;
     updateFileStatus();
+    
+    if(key === 'baocao') {
+      initTbaSearchAutoComplete();
+    }
   };
   reader.readAsArrayBuffer(f);
 };
@@ -361,11 +383,10 @@ function updateFileStatus() {
 }
 
 document.getElementById('btn-gen').onclick = () => {
-  state.charts.forEach(c => { try { c.destroy(); } catch(e){} });
-  state.charts = [];
   Object.keys(state.charts).forEach(k => {
     try { if(state.charts[k] && state.charts[k].destroy) state.charts[k].destroy(); } catch(e){}
   });
+  state.charts = {};
 
   document.getElementById('report-content').classList.remove('hidden');
 
@@ -375,6 +396,11 @@ document.getElementById('btn-gen').onclick = () => {
   renderSection4_Safety();
   renderSection5_KPI();
   renderSection6_Other();
+  
+  const currentSearch = document.getElementById('search-tba-input').value.trim();
+  if(currentSearch) {
+     drawTbaChart(currentSearch);
+  }
 
   document.getElementById('report-content').scrollIntoView({behavior:'smooth'});
 };
@@ -529,7 +555,7 @@ function renderLossReport() {
         const oldBarChart = Chart.getChart(item.id);
         if (oldBarChart) oldBarChart.destroy();
 
-        new Chart(barCtx, {
+        const bChart = new Chart(barCtx, {
             type: 'bar',
             data: {
                 labels: [`Tháng ${state.month}`],
@@ -558,12 +584,13 @@ function renderLossReport() {
             },
             plugins: [ChartDataLabels]
         });
+        state.charts[item.id] = bChart;
 
         const lineCtx = document.getElementById(item.idCum).getContext('2d');
         const oldChart = Chart.getChart(item.idCum);
         if (oldChart) oldChart.destroy();
 
-        new Chart(lineCtx, {
+        const lChart = new Chart(lineCtx, {
             type: 'line',
             data: {
                 labels: Array.from({ length: 12 }, (_, i) => `T${i + 1}`),
@@ -619,6 +646,7 @@ function renderLossReport() {
             },
             plugins: [ChartDataLabels]
         });
+        state.charts[item.idCum] = lChart;
     });
 }
 
@@ -786,7 +814,6 @@ function renderSection3_Tech() {
     createChart('c-inc-nature', 'bar', natureStats, 'Tính chất', true);
 
     const cumTypeStats = {}; const cumNatureStats = {}; let totalCum = 0;
-    // Khởi tạo các biến đếm cho sự cố Kéo dài phục vụ biểu đồ mới
     let totalCumLong = 0; let totalCumLongLastYear = 0;
     const lineCumLongCurrent = {}; const lineCumLongLast = {};
 
@@ -844,11 +871,10 @@ function renderSection3_Tech() {
         }
         if (d && !isNaN(d.getTime())) {
             const y = d.getFullYear(); const m = d.getMonth() + 1; const line = String(r[idxLine] || '').trim();
-            const type = String(r[idxType] || '').trim(); // Lấy giá trị loại sự cố ở cột E
+            const type = String(r[idxType] || '').trim(); 
             
             if (y === state.year && m <= state.month) { 
                 if(line) { lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1; } 
-                // Xử lý đếm riêng cho sự cố Kéo dài của năm báo cáo
                 if (type === "Kéo dài") {
                     totalCumLong++;
                     if(line) { lineCumLongCurrent[line] = (lineCumLongCurrent[line] || 0) + 1; }
@@ -857,7 +883,6 @@ function renderSection3_Tech() {
             if (y === (state.year - 1) && m <= state.month) { 
                 totalCumLastYear++; 
                 if(line) { lineCumLast[line] = (lineCumLast[line] || 0) + 1; } 
-                // Xử lý đếm riêng cho sự cố Kéo dài của năm trước (cùng kỳ)
                 if (type === "Kéo dài") {
                     totalCumLongLastYear++;
                     if(line) { lineCumLongLast[line] = (lineCumLongLast[line] || 0) + 1; }
@@ -875,7 +900,7 @@ function renderSection3_Tech() {
 
     if (ctxLine) {
         const old = Chart.getChart('c-inc-line-yoy'); if (old) old.destroy();
-        new Chart(ctxLine, {
+        const ilChart = new Chart(ctxLine, {
             type: 'bar',
             data: {
                 labels: allLines,
@@ -891,11 +916,9 @@ function renderSection3_Tech() {
             },
             plugins: [ChartDataLabels]
         });
+        state.charts['c-inc-line-yoy'] = ilChart;
     }
 
-    // =========================================================================
-    // KHỞI TẠO CẶP BIỂU ĐỒ MỚI: LŨY KẾ SỰ CỐ KÉO DÀI ĐẾN T & THEO ĐƯỜNG DÂY
-    // =========================================================================
     createChart('c-inc-long-yoy', 'bar', { [`${state.year - 1}`]: totalCumLongLastYear, [`${state.year}`]: totalCumLong }, `Lũy kế sự cố kéo dài đến T${state.month}`, true, true);
 
     const allLongLines = [ ...new Set([ ...Object.keys(lineCumLongCurrent), ...Object.keys(lineCumLongLast) ]) ].sort();
@@ -903,7 +926,7 @@ function renderSection3_Tech() {
 
     if (ctxLongLine) {
         const oldLong = Chart.getChart('c-inc-long-line-yoy'); if (oldLong) oldLong.destroy();
-        new Chart(ctxLongLine, {
+        const illChart = new Chart(ctxLongLine, {
             type: 'bar',
             data: {
                 labels: allLongLines,
@@ -923,6 +946,7 @@ function renderSection3_Tech() {
             },
             plugins: [ChartDataLabels]
         });
+        state.charts['c-inc-long-line-yoy'] = illChart;
     }
 
   } else { incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>'; }
@@ -994,7 +1018,7 @@ function renderSection5_KPI() {
   });
 
   const ctxAll = document.getElementById('c-kpi-all').getContext('2d');
-  state.charts.push(new Chart(ctxAll, {
+  const kChart1 = new Chart(ctxAll, {
     type: 'bar',
     data: {
       labels: labels1,
@@ -1016,7 +1040,8 @@ function renderSection5_KPI() {
           x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }
       }
     }
-  }));
+  });
+  state.charts['c-kpi-all'] = kChart1;
 
   const dhKpi = data.slice(1).filter(r => {
     return parseInt(r[idxYear]) === state.year && String(r[idxName]).includes('Định Hóa') && parseInt(r[idxMonth]) <= state.month;
@@ -1029,14 +1054,15 @@ function renderSection5_KPI() {
           cumu.push(sum / (i+1));
       }
       const ctx2 = document.getElementById('c-kpi-cumulative').getContext('2d');
-      state.charts.push(new Chart(ctx2, {
+      const kChart2 = new Chart(ctx2, {
           type: 'line',
           data: {
               labels: dhKpi.map(r => `T${r[idxMonth]}`),
               datasets: [{ label: 'Lũy kế TB', data: cumu, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.1 }]
           },
           options: { scales: { y: { min: 90 } } }
-      }));
+      });
+      state.charts['c-kpi-cumulative'] = kChart2;
   }
 
   const curVal = kpiDataMap['Định Hóa'] || 0;
@@ -1045,14 +1071,15 @@ function renderSection5_KPI() {
   const lastVal = lastYearRow ? parseFloat(lastYearRow[idxVal]) : 0;
 
   const ctx3 = document.getElementById('c-kpi-yoy').getContext('2d');
-  state.charts.push(new Chart(ctx3, {
+  const kChart3 = new Chart(ctx3, {
       type: 'bar',
       data: {
           labels: [`${state.month}/${lastYear}`, `${state.month}/${state.year}`],
           datasets: [{ label: 'Điểm KPI', data: [lastVal, curVal], backgroundColor: ['#3b82f6', '#dc2626'] }]
       },
       options: { scales: { y: { min: 80 } }, plugins: { legend: {display: false} } }
-  }));
+  });
+  state.charts['c-kpi-yoy'] = kChart3;
 
   const yearCumDataMap = {};
   
@@ -1079,7 +1106,7 @@ function renderSection5_KPI() {
   });
 
   const ctx54 = document.getElementById('c-kpi-year-cum').getContext('2d');
-  state.charts.push(new Chart(ctx54, {
+  const kChart4 = new Chart(ctx54, {
       type: 'bar',
       data: {
           labels: labels54,
@@ -1109,7 +1136,8 @@ function renderSection5_KPI() {
               x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }
           }
       }
-  }));
+  });
+  state.charts['c-kpi-year-cum'] = kChart4;
 }
 
 function renderSection6_Other() {
@@ -1200,8 +1228,168 @@ function createChart(id, type, dataObj, title, showValue = true, forceInteger = 
 
   try {
     const chart = new Chart(ctxEl, cfg);
-    state.charts.push(chart); state.charts[id] = chart;
+    state.charts[id] = chart;
   } catch(e) { console.error('createChart error for', id, e); }
+}
+
+function initTbaSearchAutoComplete() {
+  const input = document.getElementById('search-tba-input');
+  const suggestionsBox = document.getElementById('search-tba-suggestions');
+  if(!input || !suggestionsBox) return;
+
+  let tbaNames = [];
+  const sheet2026 = state.files.baocao["TBA năm 2026"];
+  const sheet2025 = state.files.baocao["TBA năm 2025"];
+  
+  if (sheet2026 && sheet2026.length > 1) {
+    tbaNames = sheet2026.slice(1).map(r => String(r[2] || '').trim()).filter(Boolean);
+  } else if (sheet2025 && sheet2025.length > 1) {
+    tbaNames = sheet2025.slice(1).map(r => String(r[2] || '').trim()).filter(Boolean);
+  }
+  tbaNames = [...new Set(tbaNames)].sort();
+
+  input.oninput = function() {
+    const value = this.value.trim().toLowerCase();
+    suggestionsBox.innerHTML = '';
+    
+    if (!value) {
+      suggestionsBox.classList.add('hidden');
+      return;
+    }
+
+    const filtered = tbaNames.filter(name => name.toLowerCase().includes(value));
+    if (filtered.length === 0) {
+      suggestionsBox.classList.add('hidden');
+      return;
+    }
+
+    filtered.forEach(name => {
+      const div = document.createElement('div');
+      div.className = 'p-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100';
+      div.innerText = name;
+      div.onclick = function() {
+        input.value = name;
+        suggestionsBox.classList.add('hidden');
+        drawTbaChart(name); 
+      };
+      suggestionsBox.appendChild(div);
+    });
+    suggestionsBox.classList.remove('hidden');
+  };
+
+  document.addEventListener('click', function(e) {
+    if (e.target !== input && e.target !== suggestionsBox) {
+      suggestionsBox.classList.add('hidden');
+    }
+  });
+}
+
+function drawTbaChart(tbaName) {
+  const chartBox = document.getElementById('tba-chart-box');
+  const chartTitle = document.getElementById('tba-chart-title');
+  if(!chartBox || !state.files.baocao) return;
+
+  const sheet2025 = state.files.baocao["TBA năm 2025"];
+  const sheet2026 = state.files.baocao["TBA năm 2026"];
+
+  let data2025 = Array(12).fill(null);
+  let data2026 = Array(12).fill(null);
+
+  if(sheet2025 && sheet2025.length > 1) {
+    const row2025 = sheet2025.slice(1).find(r => String(r[2] || '').trim().toLowerCase() === tbaName.toLowerCase());
+    if(row2025) {
+      for(let i = 0; i < 12; i++) {
+        const val = parseFloat(row2025[3 + i]);
+        data2025[i] = !isNaN(val) ? val : null;
+      }
+    }
+  }
+
+  if(sheet2026 && sheet2026.length > 1) {
+    const row2026 = sheet2026.slice(1).find(r => String(r[2] || '').trim().toLowerCase() === tbaName.toLowerCase());
+    if(row2026) {
+      for(let i = 0; i < 12; i++) {
+        if((i + 1) <= state.month) {
+          const val = parseFloat(row2026[3 + i]);
+          data2026[i] = !isNaN(val) ? val : null;
+        } else {
+          data2026[i] = null; 
+        }
+      }
+    }
+  }
+
+  chartBox.classList.remove('hidden');
+  chartTitle.innerText = `BIỂU ĐỒ DIỄN BIẾN TỔN THẤT ĐIỆN NĂNG - ${tbaName.toUpperCase()}`;
+
+  const ctxTba = document.getElementById('loss-tba-public-line').getContext('2d');
+  try { if(state.charts['loss-tba-public-line'] && state.charts['loss-tba-public-line'].destroy) state.charts['loss-tba-public-line'].destroy(); } catch(e){}
+
+  const newTbaChart = new Chart(ctxTba, {
+    type: 'line',
+    data: {
+      labels: Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`),
+      datasets: [
+        {
+          label: `Năm báo cáo ${state.year} (Đến T${state.month})`,
+          data: data2026,
+          borderColor: '#dc2626', 
+          backgroundColor: '#dc2626',
+          borderWidth: 3,
+          pointRadius: 4,
+          tension: 0.1,
+          spanGaps: false,
+          datalabels: {
+            align: 'top',
+            anchor: 'end',
+            color: '#000000',
+            font: { weight: 'bold', size: 11 },
+            offset: 4,
+            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+          }
+        },
+        {
+          label: `Cùng kỳ năm ${state.year - 1} (Cả năm)`,
+          data: data2025,
+          borderColor: '#1d4ed8', 
+          backgroundColor: '#1d4ed8',
+          borderWidth: 3,
+          pointRadius: 4,
+          tension: 0.1,
+          spanGaps: true,
+          datalabels: {
+            align: 'bottom',
+            anchor: 'start',
+            color: '#000000',
+            font: { weight: 'bold', size: 11 },
+            offset: 4,
+            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
+        datalabels: { display: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Tỷ lệ tổn thất (%)', font: { weight: 'bold' } },
+          ticks: { color: '#000', font: { weight: 'bold' } }
+        },
+        x: {
+          ticks: { color: '#000', font: { weight: 'bold' } }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  state.charts['loss-tba-public-line'] = newTbaChart;
 }
 
 document.getElementById('btn-export-word').onclick = () => {
