@@ -250,6 +250,22 @@
           <div class="p-2 border rounded bg-white text-center font-bold text-blue-900 mb-2" id="tba-chart-title">Biểu đồ tổn thất TBA</div>
           <div class="h-80 border p-2 bg-white"><canvas id="loss-tba-public-line"></canvas></div>
         </div>
+
+        <h5 class="font-bold text-blue-700 mb-2 mt-6">3.4.6. Tỷ trọng TBA theo ngưỡng tổn thất tháng</h5>
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+          <div class="h-80 border p-2 relative bg-white">
+            <canvas id="c-tba-loss-month"></canvas>
+          </div>
+        </div>
+        <div id="tba-loss-month-table-area" class="overflow-x-auto mb-6"></div>
+
+        <h5 class="font-bold text-blue-700 mb-2 mt-6">3.4.7. Tỷ trọng TBA theo ngưỡng tổn thất lũy kế</h5>
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+          <div class="h-80 border p-2 relative bg-white">
+            <canvas id="c-tba-loss-cum"></canvas>
+          </div>
+        </div>
+        <div id="tba-loss-cum-table-area" class="overflow-x-auto mb-6"></div>
       </section>
 
       <section class="mb-8">
@@ -703,6 +719,9 @@ function renderLossReport() {
 
 function renderSection3_Tech() {
   renderLossReport();
+  
+  // VẼ BIỂU ĐỒ 3.4.6 VÀ 3.4.7
+  renderTbaLossProportionCharts();
 
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
@@ -1000,13 +1019,11 @@ function renderSection3_Tech() {
         state.charts['c-inc-long-line-yoy'] = illChart;
     }
 
-    // Tự động kích hoạt tổng hợp mặc định theo chu kỳ hiện tại khi tạo báo cáo
     doIncidentSummaryAggregation();
 
   } else { incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>'; }
 }
 
-// BỔ SUNG: LOGIC XỬ LÝ SỰ KIỆN NÚT TỔNG HỢP SỰ CỐ THEO ĐƯỜNG DÂY
 document.getElementById('btn-sum-incident').onclick = () => {
   doIncidentSummaryAggregation();
 };
@@ -1135,6 +1152,148 @@ function renderSection4_Safety() {
 
   const sumHH = rowsYear.reduce((a,b) => a + (Number(b[5])||0), 0); const tongLuyKe = sumKH + sumBS + sumDX;
   createChart("c-ecp4", "pie", { "Hoãn/Hủy": sumHH, "Thực hiện": tongLuyKe - sumHH }, "Lũy kế hoãn hủy", true);
+}
+
+// HÀM TÍNH TOÁN VÀ KHỞI TẠO BIỂU ĐỒ TRÒN RỖNG CHO MỤC 3.4.6 VÀ 3.4.7
+function renderTbaLossProportionCharts() {
+  const sheetName = "TBA năm " + state.year;
+  if (!state.files.baocao || !state.files.baocao[sheetName]) {
+    document.getElementById('tba-loss-month-table-area').innerHTML = '<p class="text-red-500 italic">Thiếu dữ liệu tệp "Baocao_tonghop" của ' + sheetName + '</p>';
+    return;
+  }
+
+  const rows = state.files.baocao[sheetName].slice(1);
+  const colIndexMonth = 2 + state.month; // Cột D=Tháng 1 (index 3), E=Tháng 2, ...
+  const colIndexCum = 15; // Cột P là cột lũy kế (index 15)
+
+  const groupsMonth = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
+  const groupsCum = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
+
+  rows.forEach(r => {
+    const tbaName = String(r[2] || '').trim();
+    if (!tbaName) return;
+
+    const valMonth = parseFloat(r[colIndexMonth]);
+    if (!isNaN(valMonth)) {
+      const item = { name: tbaName, value: valMonth };
+      if (valMonth < 2) groupsMonth['<2%'].push(item);
+      else if (valMonth < 3) groupsMonth['>=2 và <3%'].push(item);
+      else if (valMonth < 4) groupsMonth['>=3 và <4%'].push(item);
+      else if (valMonth < 5) groupsMonth['>=4 và <5%'].push(item);
+      else if (valMonth < 7) groupsMonth['>=5 và <7%'].push(item);
+      else groupsMonth['>=7%'].push(item);
+    }
+
+    const valCum = parseFloat(r[colIndexCum]);
+    if (!isNaN(valCum)) {
+      const item = { name: tbaName, value: valCum };
+      if (valCum < 2) groupsCum['<2%'].push(item);
+      else if (valCum < 3) groupsCum['>=2 và <3%'].push(item);
+      else if (valCum < 4) groupsCum['>=3 và <4%'].push(item);
+      else if (valCum < 5) groupsCum['>=4 và <5%'].push(item);
+      else if (valCum < 7) groupsCum['>=5 và <7%'].push(item);
+      else groupsCum['>=7%'].push(item);
+    }
+  });
+
+  buildDoughnutChartLoss('c-tba-loss-month', 'tba-loss-month-table-area', groupsMonth, "tháng " + state.month);
+  buildDoughnutChartLoss('c-tba-loss-cum', 'tba-loss-cum-table-area', groupsCum, "lũy kế");
+}
+
+function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  try { if (state.charts[canvasId] && state.charts[canvasId].destroy) state.charts[canvasId].destroy(); } catch(e){}
+
+  const labels = Object.keys(groupsData);
+  const counts = labels.map(key => groupsData[key].length);
+  const totalTBA = counts.reduce((a, b) => a + b, 0);
+
+  document.getElementById(tableAreaId).innerHTML = '';
+
+  const newChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: counts,
+        backgroundColor: CHART_COLORS.slice(0, labels.length),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { 
+          display: true, 
+          text: `Tỷ trọng TBA theo ngưỡng tổn thất ${labelText} (Tổng: ${totalTBA} TBA)`, 
+          font: { size: 15 },
+          padding: { top: 10, bottom: 40 } // TĂNG KHOẢNG CÁCH ĐỂ KHÔNG BỊ DÍNH CHỮ
+        },
+        legend: { position: 'right' },
+        datalabels: {
+          display: true,
+          color: '#000',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value) => {
+            if (value === 0) return '';
+            const pct = totalTBA ? ((value / totalTBA) * 100).toFixed(1) : 0;
+            return `${value} trạm\n(${pct}%)`;
+          }
+        }
+      },
+      onClick: (evt, elements) => {
+        if (!elements || elements.length === 0) return;
+        const index = elements[0].index;
+        const clickedLabel = labels[index];
+        const rawItems = groupsData[clickedLabel];
+        
+        // Sắp xếp dữ liệu giảm dần
+        const sortedItems = [...rawItems].sort((a, b) => b.value - a.value);
+        
+        let htmlTable = `<div class="p-2 bg-blue-50 text-blue-950 border font-bold text-center mt-3">
+            DANH SÁCH TBA THUỘC NGƯỠNG [${clickedLabel}] - BIỂU ĐỒ TỔN THẤT ${labelText.toUpperCase()} (${sortedItems.length} TBA)
+        </div>`;
+        
+        if(sortedItems.length === 0) {
+            htmlTable += `<p class="p-2 border border-t-0 text-center italic bg-white text-gray-500">Không có dữ liệu trạm biến áp.</p>`;
+        } else {
+            htmlTable += `<table class="report-table bg-white"><thead><tr>
+                <th>STT</th><th>Tên Trạm Biến Áp</th><th>Tổn thất %</th>
+                <th>STT</th><th>Tên Trạm Biến Áp</th><th>Tổn thất %</th>
+            </tr></thead><tbody>`;
+            
+            const half = Math.ceil(sortedItems.length / 2);
+            for(let i = 0; i < half; i++) {
+                const leftItem = sortedItems[i];
+                const rightItem = sortedItems[i + half];
+                
+                htmlTable += `<tr>
+                    <td class="text-center bg-gray-50" style="width:5%;">${i + 1}</td>
+                    <td>${leftItem.name}</td>
+                    <td class="text-right font-bold text-red-700" style="width:12%;">${leftItem.value.toFixed(2).replace('.', ',')}%</td>`;
+                
+                if(rightItem) {
+                    htmlTable += `
+                    <td class="text-center bg-gray-50" style="width:5%;">${i + 1 + half}</td>
+                    <td>${rightItem.name}</td>
+                    <td class="text-right font-bold text-red-700" style="width:12%;">${rightItem.value.toFixed(2).replace('.', ',')}%</td>`;
+                } else {
+                    htmlTable += `<td class="bg-gray-50"></td><td></td><td></td>`;
+                }
+                htmlTable += `</tr>`;
+            }
+            htmlTable += `</tbody></table>`;
+        }
+        
+        document.getElementById(tableAreaId).innerHTML = htmlTable;
+        document.getElementById(tableAreaId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    },
+    plugins: [ChartDataLabels] // ĐÃ BỎ CENTER TEXT PLUGIN Ở ĐÂY
+  });
+
+  state.charts[canvasId] = newChart;
 }
 
 function renderSection5_KPI() {
