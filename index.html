@@ -177,6 +177,40 @@
             <div class="h-72 border p-2"><canvas id="c-inc-long-yoy"></canvas></div>
             <div class="h-72 border p-2"><canvas id="c-inc-long-line-yoy"></canvas></div>
           </div>
+
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded mb-4 hidden-print">
+            <div class="font-bold text-blue-900 mb-2">Chi tiết sự cố theo đường dây:</div>
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+              <div class="flex items-center gap-1">
+                <span>Từ tháng:</span>
+                <select id="sum-from-month" class="border rounded p-1 bg-white font-bold"></select>
+              </div>
+              <div class="flex items-center gap-1">
+                <span>Đến tháng:</span>
+                <select id="sum-to-month" class="border rounded p-1 bg-white font-bold"></select>
+              </div>
+              <div class="flex items-center gap-1">
+                <span>Năm:</span>
+                <select id="sum-year" class="border rounded p-1 bg-white font-bold"></select>
+              </div>
+              <div class="flex items-center gap-1">
+                <span>Đường dây:</span>
+                <select id="sum-line" class="border rounded p-1 bg-white font-bold">
+                  <option value="ALL">-- Tất cả --</option>
+                  <option value="471">471</option>
+                  <option value="472">472</option>
+                  <option value="473">473</option>
+                  <option value="371">371</option>
+                  <option value="373">373</option>
+                </select>
+              </div>
+              <button id="btn-sum-incident" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-1 rounded font-bold transition">
+                Tổng hợp sự cố theo đường dây
+              </button>
+            </div>
+          </div>
+          <div id="sum-incident-result-area" class="overflow-x-auto mb-4"></div>
+
           <div id="incident-list-area"></div>
         </div>
       </section>
@@ -303,14 +337,28 @@ const CHART_COLORS = [
 
 (function init() {
   const selMonth = document.getElementById('sel-month');
-  for(let i=1; i<=12; i++) selMonth.add(new Option(i, i));
+  const sumFromMonth = document.getElementById('sum-from-month');
+  const sumToMonth = document.getElementById('sum-to-month');
+  
+  for(let i=1; i<=12; i++) {
+    selMonth.add(new Option(i, i));
+    sumFromMonth.add(new Option("Tháng " + i, i));
+    sumToMonth.add(new Option("Tháng " + i, i));
+  }
   selMonth.value = state.month;
+  sumFromMonth.value = 1;
+  sumToMonth.value = state.month;
 
   const selYear = document.getElementById('sel-year');
+  const sumYear = document.getElementById('sum-year');
   const curY = new Date().getFullYear();
   const maxYear = 2030;
-  for(let i=curY-3; i<=maxYear; i++) selYear.add(new Option(i, i));
+  for(let i=curY-3; i<=maxYear; i++) {
+    selYear.add(new Option(i, i));
+    sumYear.add(new Option(i, i));
+  }
   selYear.value = state.year;
+  sumYear.value = state.year;
 
   document.getElementById('display-period').innerText = `Tháng ${state.month} Năm ${state.year}`;
   document.getElementById('print-date').innerText = new Date().toLocaleDateString('vi-VN');
@@ -323,6 +371,9 @@ document.getElementById('btn-apply-period').onclick = () => {
   const statusEl = document.getElementById('file-status');
   statusEl.innerHTML = `<span class="text-blue-600 font-bold">Đã chọn: T${state.month}/${state.year}. Nhấn "TẠO BÁO CÁO".</span>`;
   
+  document.getElementById('sum-to-month').value = state.month;
+  document.getElementById('sum-year').value = state.year;
+
   const currentSearch = document.getElementById('search-tba-input').value.trim();
   if(currentSearch && state.files.baocao) {
      drawTbaChart(currentSearch);
@@ -949,7 +1000,115 @@ function renderSection3_Tech() {
         state.charts['c-inc-long-line-yoy'] = illChart;
     }
 
+    // Tự động kích hoạt tổng hợp mặc định theo chu kỳ hiện tại khi tạo báo cáo
+    doIncidentSummaryAggregation();
+
   } else { incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>'; }
+}
+
+// BỔ SUNG: LOGIC XỬ LÝ SỰ KIỆN NÚT TỔNG HỢP SỰ CỐ THEO ĐƯỜNG DÂY
+document.getElementById('btn-sum-incident').onclick = () => {
+  doIncidentSummaryAggregation();
+};
+
+function doIncidentSummaryAggregation() {
+  const resultArea = document.getElementById('sum-incident-result-area');
+  resultArea.innerHTML = '';
+  
+  if (!state.files.baocao) {
+    resultArea.innerHTML = '<p class="text-red-500 italic">Vui lòng nạp tệp "Baocao_tonghop" trước.</p>';
+    return;
+  }
+  
+  const incData = state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố'];
+  if(!incData) {
+    resultArea.innerHTML = '<p class="text-red-500 italic">Thiếu sheet "Quản lý sự cố" hoặc "Sự cố" trong file dữ liệu.</p>';
+    return;
+  }
+
+  const fromMonth = parseInt(document.getElementById('sum-from-month').value);
+  const toMonth = parseInt(document.getElementById('sum-to-month').value);
+  const filterYear = parseInt(document.getElementById('sum-year').value);
+  const filterLine = document.getElementById('sum-line').value;
+
+  if (fromMonth > toMonth) {
+    resultArea.innerHTML = '<p class="text-red-500 italic">Lỗi điều kiện lọc: "Từ tháng" phải nhỏ hơn hoặc bằng "Đến tháng".</p>';
+    return;
+  }
+
+  const idxLocation = 2; const idxReason = 3; const idxType = 4; const idxDate = 5; const idxNature = 8; const idxLine = 9; const idxMonthYear = 10;
+
+  const matchedRows = incData.slice(1).filter(r => {
+    let d = null;
+    const kValue = r[idxMonthYear];
+    if (kValue) {
+        if (typeof kValue === 'number') d = new Date((kValue - (25567 + 2)) * 86400 * 1000);
+        else if (typeof kValue === 'string') {
+            if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
+            else if (kValue.includes('/')) { const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
+        }
+    }
+    if (!d && r[idxDate]) {
+        const f = r[idxDate];
+        if (typeof f === 'number') d = new Date((f - (25567 + 2)) * 86400 * 1000);
+        else if (typeof f === 'string') {
+            if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
+            else if (f.includes('/')) { const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
+        }
+    }
+
+    if (d && !isNaN(d.getTime())) {
+      const rowY = d.getFullYear();
+      const rowM = d.getMonth() + 1;
+      const rowLine = String(r[idxLine] || '').trim();
+
+      if (rowY === filterYear && rowM >= fromMonth && rowM <= toMonth) {
+        if (filterLine === 'ALL') {
+          return true;
+        } else {
+          return rowLine.includes(filterLine);
+        }
+      }
+    }
+    return false;
+  });
+
+  let html = `<div class="p-2 bg-gray-100 text-blue-900 border font-bold text-center mt-2">
+                BẢNG TỔNG HỢP CHI TIẾT SỰ CỐ TỪ THÁNG ${fromMonth} ĐẾN THÁNG ${toMonth} NĂM ${filterYear} - ĐƯỜNG DÂY: ${filterLine === 'ALL' ? 'TẤT CẢ' : filterLine}
+              </div>`;
+  html += '<table class="report-table"><thead><tr><th>STT</th><th>Ngày</th><th>Đường dây</th><th>Vị trí/Thiết bị</th><th>Tóm tắt Nguyên nhân</th><th>Tính chất</th><th>Loại sự cố</th></tr></thead><tbody>';
+  
+  if(matchedRows.length === 0) {
+    html += '<tr><td colspan="7" class="text-center italic text-gray-500">Không tìm thấy dữ liệu sự cố thỏa mãn điều kiện lọc.</td></tr>';
+  } else {
+    matchedRows.forEach((r, idx) => {
+      let rawDate = r[idxMonthYear] || r[idxDate];
+      let dateStr = '---';
+      let dObj = null;
+      if(typeof rawDate === 'number') dObj = new Date((rawDate - (25567 + 2)) * 86400 * 1000);
+      else if (typeof rawDate === 'string') {
+        if(rawDate.includes('-')) { const p = rawDate.split('-'); dObj = new Date(p[0], p[1]-1, p[2]); }
+        else if(rawDate.includes('/')) { const p = rawDate.split(' ')[0].split('/'); if(p.length === 3) dObj = new Date(p[2], p[1]-1, p[0]); }
+      }
+      if(dObj && !isNaN(dObj.getTime())) {
+        dateStr = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth()+1).padStart(2,'0')}/${dObj.getFullYear()}`;
+      } else {
+        dateStr = String(rawDate).substring(0, 10);
+      }
+      
+      html += `<tr>
+                <td class="text-center">${idx + 1}</td>
+                <td class="text-center">${dateStr}</td>
+                <td class="text-center font-bold">${r[idxLine] || ''}</td>
+                <td>${r[idxLocation] || ''}</td>
+                <td>${r[idxReason] || ''}</td>
+                <td class="text-center">${r[idxNature] || ''}</td>
+                <td class="text-center">${r[idxType] || ''}</td>
+              </tr>`;
+    });
+  }
+  html += '</tbody></table>';
+  resultArea.innerHTML = html;
 }
 
 function renderSection4_Safety() {
