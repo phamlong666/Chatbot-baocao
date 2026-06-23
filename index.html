@@ -62,10 +62,6 @@
             <button onclick="document.getElementById('f-bckd').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm transition font-bold">
               📂 2. Upload BCKD_Thang
             </button>
-            <input type="file" id="f-ecp" accept=".xlsx,.xls" hidden />
-            <button onclick="document.getElementById('f-ecp').click()" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-sm transition font-bold">
-              📂 3. Upload ECP
-            </button>
           </div>
           <div id="file-status" class="text-xs text-gray-500 italic mt-1">Chưa có file nào được chọn.</div>
         </div>
@@ -338,8 +334,33 @@ Chart.defaults.set('plugins.datalabels', {
   } 
 });
 
+// Plugin vẽ tổng số người vào tâm biểu đồ tròn rỗng (Doughnut)
+const centerTextPlugin = {
+  id: 'centerText',
+  beforeDraw: function(chart) {
+    if (chart.config.type === 'doughnut' && chart.canvas.id === 'c-age') {
+      const { ctx, width, height } = chart;
+      ctx.save();
+      const dataset = chart.data.datasets[0];
+      const total = dataset.data.reduce((a, b) => a + b, 0);
+      
+      ctx.font = "bold 14pt 'Times New Roman'";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#000";
+      
+      const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+      const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+      
+      ctx.fillText("Tổng số:\n" + total + " ng", centerX, centerY);
+      ctx.restore();
+    }
+  }
+};
+Chart.register(centerTextPlugin);
+
 const state = {
-  files: { baocao: null, bckd: null, ecp: null },
+  files: { baocao: null, bckd: null },
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
   charts: {} 
@@ -438,14 +459,17 @@ const handleFile = (e, key) => {
 
 document.getElementById('f-bc').onchange = (e) => handleFile(e, 'baocao');
 document.getElementById('f-bckd').onchange = (e) => handleFile(e, 'bckd');
-document.getElementById('f-ecp').onchange = (e) => handleFile(e, 'ecp');
 
 function updateFileStatus() {
   const s = state.files;
   const list = [];
-  if(s.baocao) list.push('Baocao_tonghop');
+  if(s.baocao) {
+    list.push('Baocao_tonghop');
+    if(s.baocao['ECP']) {
+      list.push('ECP (Tích hợp)');
+    }
+  }
   if(s.bckd) list.push('BCKD_Thang');
-  if(s.ecp) list.push('ECP');
   document.getElementById('file-status').innerText = list.length ? "Đã nạp: " + list.join(', ') : "Chưa có file nào.";
 }
 
@@ -719,8 +743,6 @@ function renderLossReport() {
 
 function renderSection3_Tech() {
   renderLossReport();
-  
-  // VẼ BIỂU ĐỒ 3.4.6 VÀ 3.4.7
   renderTbaLossProportionCharts();
 
   const tbaArea = document.getElementById('tba-summary-area');
@@ -1019,14 +1041,11 @@ function renderSection3_Tech() {
         state.charts['c-inc-long-line-yoy'] = illChart;
     }
 
+    document.getElementById('btn-sum-incident').onclick = () => { doIncidentSummaryAggregation(); };
     doIncidentSummaryAggregation();
 
   } else { incArea.innerHTML = '<p class="text-red-500">Thiếu sheet "Quản lý sự cố".</p>'; }
 }
-
-document.getElementById('btn-sum-incident').onclick = () => {
-  doIncidentSummaryAggregation();
-};
 
 function doIncidentSummaryAggregation() {
   const resultArea = document.getElementById('sum-incident-result-area');
@@ -1130,9 +1149,9 @@ function doIncidentSummaryAggregation() {
 
 function renderSection4_Safety() {
   const year = state.year; const month = state.month;
-  if (!state.files.ecp) return;
-  const sheet = Object.values(state.files.ecp)[0];
-  if (!sheet || sheet.length < 2) return;
+  if (!state.files.baocao || !state.files.baocao['ECP']) return;
+  const sheet = state.files.baocao['ECP'];
+  if (sheet.length < 2) return;
 
   const rows = sheet.slice(1).filter(r => Number(r[0]) === year && Number(r[1]) === month );
   if (rows.length === 0) return;
@@ -1154,7 +1173,6 @@ function renderSection4_Safety() {
   createChart("c-ecp4", "pie", { "Hoãn/Hủy": sumHH, "Thực hiện": tongLuyKe - sumHH }, "Lũy kế hoãn hủy", true);
 }
 
-// HÀM TÍNH TOÁN VÀ KHỞI TẠO BIỂU ĐỒ TRÒN RỖNG CHO MỤC 3.4.6 VÀ 3.4.7
 function renderTbaLossProportionCharts() {
   const sheetName = "TBA năm " + state.year;
   if (!state.files.baocao || !state.files.baocao[sheetName]) {
@@ -1163,8 +1181,8 @@ function renderTbaLossProportionCharts() {
   }
 
   const rows = state.files.baocao[sheetName].slice(1);
-  const colIndexMonth = 2 + state.month; // Cột D=Tháng 1 (index 3), E=Tháng 2, ...
-  const colIndexCum = 15; // Cột P là cột lũy kế (index 15)
+  const colIndexMonth = 2 + state.month; 
+  const colIndexCum = 15; 
 
   const groupsMonth = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
   const groupsCum = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
@@ -1228,7 +1246,7 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
           display: true, 
           text: `Tỷ trọng TBA theo ngưỡng tổn thất ${labelText} (Tổng: ${totalTBA} TBA)`, 
           font: { size: 15 },
-          padding: { top: 10, bottom: 40 } // TĂNG KHOẢNG CÁCH ĐỂ KHÔNG BỊ DÍNH CHỮ
+          padding: { top: 10, bottom: 40 } 
         },
         legend: { position: 'right' },
         datalabels: {
@@ -1247,8 +1265,6 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
         const index = elements[0].index;
         const clickedLabel = labels[index];
         const rawItems = groupsData[clickedLabel];
-        
-        // Sắp xếp dữ liệu giảm dần
         const sortedItems = [...rawItems].sort((a, b) => b.value - a.value);
         
         let htmlTable = `<div class="p-2 bg-blue-50 text-blue-950 border font-bold text-center mt-3">
@@ -1290,7 +1306,7 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
         document.getElementById(tableAreaId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     },
-    plugins: [ChartDataLabels] // ĐÃ BỎ CENTER TEXT PLUGIN Ở ĐÂY
+    plugins: [ChartDataLabels] 
   });
 
   state.charts[canvasId] = newChart;
