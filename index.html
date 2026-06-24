@@ -8,12 +8,12 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  
+ 
   <style>
-    body { 
-        font-family: "Times New Roman", Times, serif; 
-        background: #f3f4f6; 
-        color: #000; 
+    body {
+        font-family: "Times New Roman", Times, serif;
+        background: #f3f4f6;
+        color: #000;
         font-size: 13pt;
     }
     .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 16px; }
@@ -25,11 +25,11 @@
     h2 { font-size: 14pt; }
     h3 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: 5px; margin-top: 20px;}
     .hidden-print { display: block; }
-    @media print { 
-        .hidden-print { display: none !important; } 
+    @media print {
+        .hidden-print { display: none !important; }
         body { background: white; padding: 0; }
         .card { box-shadow: none; border: none; padding: 0; margin-bottom: 20px; }
-        -webkit-print-color-adjust: exact; 
+        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         section { break-inside: avoid; }
     }
@@ -81,7 +81,7 @@
               ÁP DỤNG
             </button>
           </div>
-          <p class="text-xs text-gray-500">Chọn thời gian để lọc dữ liệu KPI và Sự cố từ file tổng hợp.</p>
+          <p class="text-xs text-gray-500">Bản quyền © 2026 by Phạm Hồng Long & Brown Eyes.</p>
         </div>
       </div>
 
@@ -113,10 +113,10 @@
         <input id="m-371" placeholder="371 E6.22 (km)" class="border p-2 rounded text-sm" value="40.23">
         <input id="m-373" placeholder="373 E6.22 (km)" class="border p-2 rounded text-sm" value="71.77">
         <input id="m-lt-day" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="667.40 ">
-    	<input id="m-recloser" placeholder="Máy cắt Recloser (bộ)" class="border p-2 rounded text-sm" value="06 ">
-    	<input id="m-lbs" placeholder="LBS (bộ)" class="border p-2 rounded text-sm" value="21 ">
-    	<input id="m-tubutt" placeholder="Tụ bù trung thế (bộ)" class="border p-2 rounded text-sm" value="04 ">
-    	<input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
+    <input id="m-recloser" placeholder="Máy cắt Recloser (bộ)" class="border p-2 rounded text-sm" value="06 ">
+    <input id="m-lbs" placeholder="LBS (bộ)" class="border p-2 rounded text-sm" value="21 ">
+    <input id="m-tubutt" placeholder="Tụ bù trung thế (bộ)" class="border p-2 rounded text-sm" value="04 ">
+    <input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
       <div class="mt-6">
@@ -200,6 +200,14 @@
                   <option value="373">373</option>
                 </select>
               </div>
+              <div class="flex items-center gap-1">
+                <span>Loại sự cố:</span>
+                <select id="sum-type" class="border rounded p-1 bg-white font-bold">
+                  <option value="ALL">-- Tất cả --</option>
+                  <option value="Thoảng qua">Thoảng qua</option>
+                  <option value="Kéo dài">Kéo dài</option>
+                </select>
+              </div>
               <button id="btn-sum-incident" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-1 rounded font-bold transition">
                 Tổng hợp sự cố theo đường dây
               </button>
@@ -210,8 +218,8 @@
           <div id="incident-list-area"></div>
         </div>
       </section>
-	
-	  <section class="mb-8">
+
+ <section class="mb-8">
         <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
         <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -233,7 +241,7 @@
           <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
           <div class="h-64 border p-2"><canvas id="loss-low-cum"></canvas></div>
         </div>
-        
+       
         <h5 class="font-bold text-blue-700 mb-2">3.4.5. Tìm TBA công cộng</h5>
         <div class="bg-gray-50 border p-4 rounded mb-4 hidden-print">
           <div class="relative w-full max-w-md">
@@ -331,7 +339,7 @@ Chart.defaults.set('plugins.datalabels', {
     if (value === 0) return '';
     if (value > 1000) return (value / 1000).toFixed(1) + 'k';
     return parseFloat(value).toFixed(2).replace(/\.00$/, '').toLocaleString('vi-VN');
-  } 
+  }
 });
 
 // Plugin vẽ tổng số người vào tâm biểu đồ tròn rỗng (Doughnut)
@@ -343,16 +351,16 @@ const centerTextPlugin = {
       ctx.save();
       const dataset = chart.data.datasets[0];
       const total = dataset.data.reduce((a, b) => a + b, 0);
-      
+     
       ctx.font = "bold 14pt 'Times New Roman'";
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
       ctx.fillStyle = "#000";
-      
+     
       const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
       const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
-      
-      ctx.fillText("Tổng số:\n" + total + " ng", centerX, centerY);
+     
+      ctx.fillText(total + " người", centerX, centerY);
       ctx.restore();
     }
   }
@@ -363,7 +371,7 @@ const state = {
   files: { baocao: null, bckd: null },
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
-  charts: {} 
+  charts: {}
 };
 
 const CHART_COLORS = [
@@ -376,7 +384,7 @@ const CHART_COLORS = [
   const selMonth = document.getElementById('sel-month');
   const sumFromMonth = document.getElementById('sum-from-month');
   const sumToMonth = document.getElementById('sum-to-month');
-  
+ 
   for(let i=1; i<=12; i++) {
     selMonth.add(new Option(i, i));
     sumFromMonth.add(new Option("Tháng " + i, i));
@@ -407,7 +415,7 @@ document.getElementById('btn-apply-period').onclick = () => {
   document.getElementById('display-period').innerText = `Tháng ${state.month} Năm ${state.year}`;
   const statusEl = document.getElementById('file-status');
   statusEl.innerHTML = `<span class="text-blue-600 font-bold">Đã chọn: T${state.month}/${state.year}. Nhấn "TẠO BÁO CÁO".</span>`;
-  
+ 
   document.getElementById('sum-to-month').value = state.month;
   document.getElementById('sum-year').value = state.year;
 
@@ -449,7 +457,7 @@ const handleFile = (e, key) => {
     });
     state.files[key] = json;
     updateFileStatus();
-    
+   
     if(key === 'baocao') {
       initTbaSearchAutoComplete();
     }
@@ -487,7 +495,7 @@ document.getElementById('btn-gen').onclick = () => {
   renderSection4_Safety();
   renderSection5_KPI();
   renderSection6_Other();
-  
+ 
   const currentSearch = document.getElementById('search-tba-input').value.trim();
   if(currentSearch) {
      drawTbaChart(currentSearch);
@@ -498,7 +506,7 @@ document.getElementById('btn-gen').onclick = () => {
 
 function renderSection1_HR() {
   const data = state.files.baocao ? (state.files.baocao['CBCNV'] || Object.values(state.files.baocao)[0]) : [];
-  if(!data || data.length < 2) return; 
+  if(!data || data.length < 2) return;
   const rows = data.slice(1);
   const ageStats = {'<30':0, '30-40':0, '40-50':0, '>50':0};
   const qualStats = {};
@@ -540,7 +548,7 @@ function renderSection2_Business() {
   const rawData = sheet.slice(1);
   let sttCounter = 1;
   rawData.forEach((row, index) => {
-    if (index === 19 || index === 20) return; 
+    if (index === 19 || index === 20) return;
     if (sttCounter > 25) return;
     const chiTieu = row[1] || '';
     if(!chiTieu) return;
@@ -565,17 +573,17 @@ function renderLossReport() {
         const sheet = state.files.baocao[item.sheet];
         if (!sheet || sheet.length < 2) return;
         const rows = sheet.slice(1);
-        
+       
         const currentYear = state.year;
         const lastYear = currentYear - 1;
 
         let curSumC = Array(12).fill(0), curSumD = Array(12).fill(0);
         let lastSumC = Array(12).fill(0), lastSumD = Array(12).fill(0);
-        let planLineG = Array(12).fill(null); 
-        
+        let planLineG = Array(12).fill(null);
+       
         let barValuesCur = 0;
         let barValuesLast = 0;
-        let barValuesPlan = 0; 
+        let barValuesPlan = 0;
 
         rows.forEach(r => {
             const year = parseInt(r[0]);
@@ -583,13 +591,13 @@ function renderLossReport() {
             const cVal = parseFloat(r[2]) || 0;
             const dVal = parseFloat(r[3]) || 0;
             const loss = parseFloat(r[4]) || 0;
-            const planF = parseFloat(r[5]) || 0; 
-            const planG = parseFloat(r[6]) || 0; 
+            const planF = parseFloat(r[5]) || 0;
+            const planG = parseFloat(r[6]) || 0;
 
             if (month === state.month) {
                 if (year === currentYear) {
                     barValuesCur = loss;
-                    barValuesPlan = planF; 
+                    barValuesPlan = planF;
                 } else if (year === lastYear) {
                     barValuesLast = loss;
                 }
@@ -598,7 +606,7 @@ function renderLossReport() {
             if (year === currentYear) {
                 curSumC[month - 1] = cVal;
                 curSumD[month - 1] = dVal;
-                planLineG[month - 1] = planG; 
+                planLineG[month - 1] = planG;
             } else if (year === lastYear) {
                 lastSumC[month - 1] = cVal;
                 lastSumD[month - 1] = dVal;
@@ -607,13 +615,13 @@ function renderLossReport() {
 
         let currentYearLine = [];
         let lastYearLine = [];
-        let allValues = []; 
+        let allValues = [];
 
         for (let i = 0; i < 12; i++) {
             if (i + 1 <= state.month) {
                 let sC_cur = 0, sD_cur = 0;
-                for (let j = 0; j <= i; j++) { 
-                    sC_cur += curSumC[j]; 
+                for (let j = 0; j <= i; j++) {
+                    sC_cur += curSumC[j];
                     sD_cur += curSumD[j];
                 }
                 let vCur = sC_cur !== 0 ? (sD_cur / sC_cur) * 100 : 0;
@@ -624,8 +632,8 @@ function renderLossReport() {
             }
 
             let sC_last = 0, sD_last = 0;
-            for (let j = 0; j <= i; j++) { 
-                sC_last += lastSumC[j]; 
+            for (let j = 0; j <= i; j++) {
+                sC_last += lastSumC[j];
                 sD_last += lastSumD[j];
             }
             let vLast = sC_last !== 0 ? (sD_last / sC_last) * 100 : 0;
@@ -638,7 +646,7 @@ function renderLossReport() {
         let minVal = allValues.length ? Math.min(...allValues.filter(v => v !== null)) : 0;
         let maxVal = allValues.length ? Math.max(...allValues.filter(v => v !== null)) : 10;
         let range = maxVal - minVal;
-        let padding = range * 0.5 || 5; 
+        let padding = range * 0.5 || 5;
         let yMin = minVal - padding;
         let yMax = maxVal + padding;
 
@@ -708,7 +716,7 @@ function renderLossReport() {
                     {
                         label: `Kế hoạch năm ${currentYear} (%)`,
                         data: planLineG,
-                        borderColor: '#10b981', 
+                        borderColor: '#10b981',
                         backgroundColor: '#10b981',
                         borderWidth: 2,
                         tension: 0.2,
@@ -724,14 +732,14 @@ function renderLossReport() {
                     datalabels: { display: true }
                 },
                 scales: {
-                    y: { 
-                        min: yMin, 
+                    y: {
+                        min: yMin,
                         max: yMax,
                         grid: {
                             color: (context) => (context.tick.value === 0 ? '#000' : '#e5e7eb'),
                             lineWidth: (context) => (context.tick.value === 0 ? 2 : 1)
                         },
-                        title: { display: true, text: '%' } 
+                        title: { display: true, text: '%' }
                     }
                 }
             },
@@ -747,9 +755,9 @@ function renderSection3_Tech() {
 
   const tbaArea = document.getElementById('tba-summary-area');
   tbaArea.innerHTML = '';
-  const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22']; 
+  const targetLines = ['471E6.22', '472E6.22', '473E6.22', '371E6.22', '373E6.22'];
   const tbaDataSheet = state.files.baocao ? (state.files.baocao['Tên các TBA'] || state.files.baocao['TBA']) : null;
-  
+ 
   let totalCount = 0;
   let totalKVA = 0;
   let totalDl = 0;
@@ -761,18 +769,18 @@ function renderSection3_Tech() {
     const agg = {};
     data.slice(1).forEach(r => {
       const lineName = String(r[idxLine] || '').trim();
-      if (!targetLines.includes(lineName)) return; 
-      
+      if (!targetLines.includes(lineName)) return;
+     
       const capStr = String(r[idxCap] || '0').toUpperCase().replace('KVA', '').trim();
       const cap = parseFloat(capStr) || 0;
       const owner = String(r[idxOwner] || '').toLowerCase();
-      
+     
       if(!agg[lineName]) agg[lineName] = { count: 0, kva: 0, kh: 0, dl: 0 };
-      
+     
       agg[lineName].count++; agg[lineName].kva += cap;
       if(owner.includes('khách hàng') || owner.includes('kh')) { agg[lineName].kh++; totalKh++; } else { agg[lineName].dl++; totalDl++; }
-      
-      totalCount++; 
+     
+      totalCount++;
       totalKVA += cap;
     });
 
@@ -791,9 +799,9 @@ function renderSection3_Tech() {
                   <td class="text-center">${pKh}%</td>
               </tr>`;
     });
-    
+   
     const totalPdl = totalCount > 0 ? ((totalDl/totalCount)*100).toFixed(0) : 0;
-    const totalPkh = totalCount > 0 ? ((totalKh/totalCount)*100).toFixed(0) : 0; 
+    const totalPkh = totalCount > 0 ? ((totalKh/totalCount)*100).toFixed(0) : 0;
     html += `<tr>
                 <td class="font-bold bg-gray-200">TỔNG CỘNG</td>
                 <td class="text-center font-bold bg-gray-200">${totalCount}</td>
@@ -803,16 +811,16 @@ function renderSection3_Tech() {
                 <td class="text-center font-bold bg-gray-200">${totalKh}</td>
                 <td class="text-center font-bold bg-gray-200">${totalPkh}%</td>
             </tr>`;
-    
+   
     html += '</tbody></table>';
     tbaArea.innerHTML = html;
   }
 
   let totalLengthTT = 0;
-  const wireInputsTT = ['m-471','m-472','m-473','m-371','m-373']; 
+  const wireInputsTT = ['m-471','m-472','m-473','m-371','m-373'];
   wireInputsTT.forEach(id=>{ totalLengthTT += parseFloat(document.getElementById(id).value)||0; });
   document.getElementById('m-total').value = totalLengthTT.toFixed(1);
-  
+ 
   document.getElementById('wire-summary').innerHTML = `<ul class="grid grid-cols-2 gap-2">
     <li class="font-bold text-blue-800">Tổng chiều dài đường dây trung thế: ${totalLengthTT.toFixed(1)} km</li>
     <li>471 E6.22: ${document.getElementById('m-471').value} km</li>
@@ -820,17 +828,17 @@ function renderSection3_Tech() {
     <li>473 E6.22: ${document.getElementById('m-473').value} km</li>
     <li>371 E6.22: ${document.getElementById('m-371').value} km</li>
     <li>373 E6.22: ${document.getElementById('m-373').value} km</li>
-    <li class="font-bold text-blue-800">Đường dây hạ thế: ${document.getElementById('m-lt-day').value} km</li> 
-    <li class="font-bold text-blue-800">Máy cắt Recloser: ${document.getElementById('m-recloser').value} bộ</li> 
-    <li class="font-bold text-blue-800">LBS: ${document.getElementById('m-lbs').value} bộ</li> 
-    <li class="font-bold text-blue-800">Tụ bù trung thế: ${document.getElementById('m-tubutt').value} bộ</li> 
+    <li class="font-bold text-blue-800">Đường dây hạ thế: ${document.getElementById('m-lt-day').value} km</li>
+    <li class="font-bold text-blue-800">Máy cắt Recloser: ${document.getElementById('m-recloser').value} bộ</li>
+    <li class="font-bold text-blue-800">LBS: ${document.getElementById('m-lbs').value} bộ</li>
+    <li class="font-bold text-blue-800">Tụ bù trung thế: ${document.getElementById('m-tubutt').value} bộ</li>
     <li class="font-bold text-blue-800">Tụ bù hạ thế: ${document.getElementById('m-tbuht').value} bộ</li>
     </ul>`;
 
   const incArea = document.getElementById('incident-list-area');
   incArea.innerHTML = '';
   const incData = state.files.baocao ? (state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố']) : null;
-  
+ 
   if(incData) {
     const idxLocation = 2; const idxReason = 3; const idxType = 4; const idxDate = 5; const idxNature = 8; const idxLine = 9; const idxMonthYear = 10;
 
@@ -853,7 +861,7 @@ function renderSection3_Tech() {
       if (!d && r[idxDate]) {
           const fValue = r[idxDate];
            if (typeof fValue === 'string') {
-               const datePart = fValue.substring(0, 10); 
+               const datePart = fValue.substring(0, 10);
                if(datePart.includes('/')) {
                    const parts = datePart.split('/');
                    d = new Date(parts[2], parts[1]-1, parts[0]);
@@ -870,7 +878,7 @@ function renderSection3_Tech() {
 
     const typeStats = {}; const natureStats = {};
     let html = '<table class="report-table mt-2"><thead><tr><th>STT</th><th>Ngày</th><th>Đường dây</th><th>Vị trí/Thiết bị</th><th>Tóm tắt Nguyên nhân</th><th>Tính chất</th><th>Loại sự cố</th></tr></thead><tbody>';
-    
+   
     if(filteredInc.length === 0) {
       html += '<tr><td colspan="7" class="text-center italic">Không có sự cố trong tháng.</td></tr>';
     }
@@ -912,17 +920,17 @@ function renderSection3_Tech() {
     incData.slice(1).forEach(r => {
         let d = null; const kValue = r[idxMonthYear];
         if (kValue) {
-            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); } 
+            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); }
             else if (typeof kValue === 'string') {
-                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
                 else if (kValue.includes('/')) { const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
         if(!d && r[idxDate]) {
             const f = r[idxDate];
-            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); } 
+            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); }
             else if (typeof f === 'string') {
-                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
                 else if (f.includes('/')) { const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
@@ -947,34 +955,34 @@ function renderSection3_Tech() {
     incData.slice(1).forEach(r => {
         let d = null; const kValue = r[idxMonthYear];
         if (kValue) {
-            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); } 
+            if (typeof kValue === 'number') { d = new Date((kValue - (25567 + 2)) * 86400 * 1000); }
             else if (typeof kValue === 'string') {
-                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                if (kValue.includes('-')) { const p = kValue.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
                 else if (kValue.includes('/')) { const p = kValue.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
         if(!d && r[idxDate]) {
             const f = r[idxDate];
-            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); } 
+            if(typeof f === 'number') { d = new Date((f - (25567 + 2)) * 86400 * 1000); }
             else if (typeof f === 'string') {
-                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); } 
+                if (f.includes('-')) { const p = f.split('-'); d = new Date(p[0], p[1]-1, p[2]); }
                 else if (f.includes('/')) { const p = f.split(' ')[0].split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
             }
         }
         if (d && !isNaN(d.getTime())) {
             const y = d.getFullYear(); const m = d.getMonth() + 1; const line = String(r[idxLine] || '').trim();
-            const type = String(r[idxType] || '').trim(); 
-            
-            if (y === state.year && m <= state.month) { 
-                if(line) { lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1; } 
+            const type = String(r[idxType] || '').trim();
+           
+            if (y === state.year && m <= state.month) {
+                if(line) { lineCumCurrent[line] = (lineCumCurrent[line] || 0) + 1; }
                 if (type === "Kéo dài") {
                     totalCumLong++;
                     if(line) { lineCumLongCurrent[line] = (lineCumLongCurrent[line] || 0) + 1; }
                 }
             }
-            if (y === (state.year - 1) && m <= state.month) { 
-                totalCumLastYear++; 
-                if(line) { lineCumLast[line] = (lineCumLast[line] || 0) + 1; } 
+            if (y === (state.year - 1) && m <= state.month) {
+                totalCumLastYear++;
+                if(line) { lineCumLast[line] = (lineCumLast[line] || 0) + 1; }
                 if (type === "Kéo dài") {
                     totalCumLongLastYear++;
                     if(line) { lineCumLongLast[line] = (lineCumLongLast[line] || 0) + 1; }
@@ -1029,10 +1037,10 @@ function renderSection3_Tech() {
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { 
+                plugins: {
                     title: { display: true, text: `Sự cố kéo dài theo đường dây`, font: { size: 16 } },
-                    legend: { position: 'bottom' }, 
-                    datalabels: { color: '#000', anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v : '' } 
+                    legend: { position: 'bottom' },
+                    datalabels: { color: '#000', anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v : '' }
                 },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             },
@@ -1050,12 +1058,12 @@ function renderSection3_Tech() {
 function doIncidentSummaryAggregation() {
   const resultArea = document.getElementById('sum-incident-result-area');
   resultArea.innerHTML = '';
-  
+ 
   if (!state.files.baocao) {
     resultArea.innerHTML = '<p class="text-red-500 italic">Vui lòng nạp tệp "Baocao_tonghop" trước.</p>';
     return;
   }
-  
+ 
   const incData = state.files.baocao['Quản lý sự cố'] || state.files.baocao['Sự cố'];
   if(!incData) {
     resultArea.innerHTML = '<p class="text-red-500 italic">Thiếu sheet "Quản lý sự cố" hoặc "Sự cố" trong file dữ liệu.</p>';
@@ -1066,6 +1074,7 @@ function doIncidentSummaryAggregation() {
   const toMonth = parseInt(document.getElementById('sum-to-month').value);
   const filterYear = parseInt(document.getElementById('sum-year').value);
   const filterLine = document.getElementById('sum-line').value;
+  const filterType = document.getElementById('sum-type').value;
 
   if (fromMonth > toMonth) {
     resultArea.innerHTML = '<p class="text-red-500 italic">Lỗi điều kiện lọc: "Từ tháng" phải nhỏ hơn hoặc bằng "Đến tháng".</p>';
@@ -1097,23 +1106,22 @@ function doIncidentSummaryAggregation() {
       const rowY = d.getFullYear();
       const rowM = d.getMonth() + 1;
       const rowLine = String(r[idxLine] || '').trim();
+      const rowType = String(r[idxType] || '').trim();
 
       if (rowY === filterYear && rowM >= fromMonth && rowM <= toMonth) {
-        if (filterLine === 'ALL') {
-          return true;
-        } else {
-          return rowLine.includes(filterLine);
-        }
+        let matchesLine = (filterLine === 'ALL') ? true : rowLine.includes(filterLine);
+        let matchesType = (filterType === 'ALL') ? true : rowType.toLowerCase() === filterType.toLowerCase();
+        return matchesLine && matchesType;
       }
     }
     return false;
   });
 
   let html = `<div class="p-2 bg-gray-100 text-blue-900 border font-bold text-center mt-2">
-                BẢNG TỔNG HỢP CHI TIẾT SỰ CỐ TỪ THÁNG ${fromMonth} ĐẾN THÁNG ${toMonth} NĂM ${filterYear} - ĐƯỜNG DÂY: ${filterLine === 'ALL' ? 'TẤT CẢ' : filterLine}
+                BẢNG TỔNG HỢP CHI TIẾT SỰ CỐ TỪ THÁNG ${fromMonth} ĐẾN THÁNG ${toMonth} NĂM ${filterYear} - ĐƯỜNG DÂY: ${filterLine === 'ALL' ? 'TẤT CẢ' : filterLine} - LOẠI SỰ CỐ: ${filterType === 'ALL' ? 'TẤT CẢ' : filterType.toUpperCase()}
               </div>`;
   html += '<table class="report-table"><thead><tr><th>STT</th><th>Ngày</th><th>Đường dây</th><th>Vị trí/Thiết bị</th><th>Tóm tắt Nguyên nhân</th><th>Tính chất</th><th>Loại sự cố</th></tr></thead><tbody>';
-  
+ 
   if(matchedRows.length === 0) {
     html += '<tr><td colspan="7" class="text-center italic text-gray-500">Không tìm thấy dữ liệu sự cố thỏa mãn điều kiện lọc.</td></tr>';
   } else {
@@ -1131,7 +1139,7 @@ function doIncidentSummaryAggregation() {
       } else {
         dateStr = String(rawDate).substring(0, 10);
       }
-      
+     
       html += `<tr>
                 <td class="text-center">${idx + 1}</td>
                 <td class="text-center">${dateStr}</td>
@@ -1156,7 +1164,7 @@ function renderSection4_Safety() {
   const rows = sheet.slice(1).filter(r => Number(r[0]) === year && Number(r[1]) === month );
   if (rows.length === 0) return;
 
-  const plvKH = rows[0][2] || 0; const plvBS = rows[0][3] || 0; const plvDX = rows[0][4] || 0; const hoanHuy = rows[0][5] || 0; 
+  const plvKH = rows[0][2] || 0; const plvBS = rows[0][3] || 0; const plvDX = rows[0][4] || 0; const hoanHuy = rows[0][5] || 0;
   createChart("c-ecp1", "pie", { "Kế hoạch": plvKH, "Bổ sung": plvBS, "Đột xuất": plvDX }, "PLV trong tháng", true);
 
   const tongPLV = plvKH + plvBS + plvDX;
@@ -1181,8 +1189,8 @@ function renderTbaLossProportionCharts() {
   }
 
   const rows = state.files.baocao[sheetName].slice(1);
-  const colIndexMonth = 2 + state.month; 
-  const colIndexCum = 15; 
+  const colIndexMonth = 2 + state.month;
+  const colIndexCum = 15;
 
   const groupsMonth = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
   const groupsCum = { '<2%': [], '>=2 và <3%': [], '>=3 và <4%': [], '>=4 và <5%': [], '>=5 và <7%': [], '>=7%': [] };
@@ -1242,11 +1250,11 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: { 
-          display: true, 
-          text: `Tỷ trọng TBA theo ngưỡng tổn thất ${labelText} (Tổng: ${totalTBA} TBA)`, 
+        title: {
+          display: true,
+          text: `Tỷ trọng TBA theo ngưỡng tổn thất ${labelText} (Tổng: ${totalTBA} TBA)`,
           font: { size: 15 },
-          padding: { top: 10, bottom: 40 } 
+          padding: { top: 10, bottom: 40 }
         },
         legend: { position: 'right' },
         datalabels: {
@@ -1266,11 +1274,11 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
         const clickedLabel = labels[index];
         const rawItems = groupsData[clickedLabel];
         const sortedItems = [...rawItems].sort((a, b) => b.value - a.value);
-        
+       
         let htmlTable = `<div class="p-2 bg-blue-50 text-blue-950 border font-bold text-center mt-3">
             DANH SÁCH TBA THUỘC NGƯỠNG [${clickedLabel}] - BIỂU ĐỒ TỔN THẤT ${labelText.toUpperCase()} (${sortedItems.length} TBA)
         </div>`;
-        
+       
         if(sortedItems.length === 0) {
             htmlTable += `<p class="p-2 border border-t-0 text-center italic bg-white text-gray-500">Không có dữ liệu trạm biến áp.</p>`;
         } else {
@@ -1278,17 +1286,17 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
                 <th>STT</th><th>Tên Trạm Biến Áp</th><th>Tổn thất %</th>
                 <th>STT</th><th>Tên Trạm Biến Áp</th><th>Tổn thất %</th>
             </tr></thead><tbody>`;
-            
+           
             const half = Math.ceil(sortedItems.length / 2);
             for(let i = 0; i < half; i++) {
                 const leftItem = sortedItems[i];
                 const rightItem = sortedItems[i + half];
-                
+               
                 htmlTable += `<tr>
                     <td class="text-center bg-gray-50" style="width:5%;">${i + 1}</td>
                     <td>${leftItem.name}</td>
                     <td class="text-right font-bold text-red-700" style="width:12%;">${leftItem.value.toFixed(2).replace('.', ',')}%</td>`;
-                
+               
                 if(rightItem) {
                     htmlTable += `
                     <td class="text-center bg-gray-50" style="width:5%;">${i + 1 + half}</td>
@@ -1301,12 +1309,12 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
             }
             htmlTable += `</tbody></table>`;
         }
-        
+       
         document.getElementById(tableAreaId).innerHTML = htmlTable;
         document.getElementById(tableAreaId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     },
-    plugins: [ChartDataLabels] 
+    plugins: [ChartDataLabels]
   });
 
   state.charts[canvasId] = newChart;
@@ -1314,10 +1322,10 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
 
 function renderSection5_KPI() {
   ['c-kpi-all', 'c-kpi-cumulative', 'c-kpi-yoy', 'c-kpi-year-cum'].forEach(id => {
-    const c = document.getElementById(id); 
+    const c = document.getElementById(id);
     if(c) { const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
   });
-  
+ 
   if(!state.files.baocao) return;
   const kpiSheetName = Object.keys(state.files.baocao).find(k => k.toUpperCase() === 'KPI');
   if(!kpiSheetName) return;
@@ -1341,11 +1349,11 @@ function renderSection5_KPI() {
       const val = row ? parseFloat(row[idxVal]) : 0;
       kpiDataMap[unitName] = val;
   });
-  
+ 
   const sortedUnits = Object.entries(kpiDataMap).sort(([,a], [,b]) => b - a);
   const labels1 = sortedUnits.map(([unit]) => unit);
   const values1 = sortedUnits.map(([,value]) => value);
-  
+ 
   const colors1 = labels1.map((unit, index) => {
       if (unit === 'Định Hóa') return '#dc2626';
       return CHART_COLORS[index % CHART_COLORS.length];
@@ -1364,12 +1372,12 @@ function renderSection5_KPI() {
       }]
     },
     options: {
-      indexAxis: 'x', 
+      indexAxis: 'x',
       plugins: {
         legend: { display: false },
         datalabels: { color: '#000', anchor: 'end', align: 'top', rotation: -90, offset: 0 }
       },
-      scales: { 
+      scales: {
           y: { beginAtZero: false, min: 80 },
           x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }
       }
@@ -1416,15 +1424,15 @@ function renderSection5_KPI() {
   state.charts['c-kpi-yoy'] = kChart3;
 
   const yearCumDataMap = {};
-  
+ 
   targetUnits.forEach(unitName => {
       const unitsRowsInYear = data.slice(1).filter(r => {
-          return parseInt(r[idxYear]) === state.year && 
-                 parseInt(r[idxMonth]) >= 1 && 
-                 parseInt(r[idxMonth]) <= state.month && 
+          return parseInt(r[idxYear]) === state.year &&
+                 parseInt(r[idxMonth]) >= 1 &&
+                 parseInt(r[idxMonth]) <= state.month &&
                  String(r[idxName]).includes(unitName);
       });
-      
+     
       const sumKPI = unitsRowsInYear.reduce((acc, curr) => acc + (parseFloat(curr[idxVal]) || 0), 0);
       const avgKPI = state.month > 0 ? (sumKPI / state.month) : 0;
       yearCumDataMap[unitName] = avgKPI;
@@ -1433,9 +1441,9 @@ function renderSection5_KPI() {
   const sortedYearCum = Object.entries(yearCumDataMap).sort(([,a], [,b]) => b - a);
   const labels54 = sortedYearCum.map(([unit]) => unit);
   const values54 = sortedYearCum.map(([,value]) => value);
-  
+ 
   const colors54 = labels54.map((unit, index) => {
-      if (unit === 'Định Hóa') return '#dc2626'; 
+      if (unit === 'Định Hóa') return '#dc2626';
       return CHART_COLORS[index % CHART_COLORS.length];
   });
 
@@ -1490,7 +1498,7 @@ function renderSection6_Other() {
   document.getElementById('other-content').innerHTML = html;
 }
 
-function createChart(id, type, dataObj, title, showValue = true, forceInteger = false) { 
+function createChart(id, type, dataObj, title, showValue = true, forceInteger = false) {
   const ctxEl = document.getElementById(id);
   if (!ctxEl) return;
   try { if(state.charts[id] && state.charts[id].destroy) state.charts[id].destroy(); } catch(e){}
@@ -1574,7 +1582,7 @@ function initTbaSearchAutoComplete() {
   let tbaNames = [];
   const sheet2026 = state.files.baocao["TBA năm 2026"];
   const sheet2025 = state.files.baocao["TBA năm 2025"];
-  
+ 
   if (sheet2026 && sheet2026.length > 1) {
     tbaNames = sheet2026.slice(1).map(r => String(r[2] || '').trim()).filter(Boolean);
   } else if (sheet2025 && sheet2025.length > 1) {
@@ -1585,7 +1593,7 @@ function initTbaSearchAutoComplete() {
   input.oninput = function() {
     const value = this.value.trim().toLowerCase();
     suggestionsBox.innerHTML = '';
-    
+   
     if (!value) {
       suggestionsBox.classList.add('hidden');
       return;
@@ -1604,7 +1612,7 @@ function initTbaSearchAutoComplete() {
       div.onclick = function() {
         input.value = name;
         suggestionsBox.classList.add('hidden');
-        drawTbaChart(name); 
+        drawTbaChart(name);
       };
       suggestionsBox.appendChild(div);
     });
@@ -1647,7 +1655,7 @@ function drawTbaChart(tbaName) {
           const val = parseFloat(row2026[3 + i]);
           data2026[i] = !isNaN(val) ? val : null;
         } else {
-          data2026[i] = null; 
+          data2026[i] = null;
         }
       }
     }
@@ -1667,7 +1675,7 @@ function drawTbaChart(tbaName) {
         {
           label: `Năm báo cáo ${state.year} (Đến T${state.month})`,
           data: data2026,
-          borderColor: '#dc2626', 
+          borderColor: '#dc2626',
           backgroundColor: '#dc2626',
           borderWidth: 3,
           pointRadius: 4,
@@ -1685,7 +1693,7 @@ function drawTbaChart(tbaName) {
         {
           label: `Cùng kỳ năm ${state.year - 1} (Cả năm)`,
           data: data2025,
-          borderColor: '#1d4ed8', 
+          borderColor: '#1d4ed8',
           backgroundColor: '#1d4ed8',
           borderWidth: 3,
           pointRadius: 4,
@@ -1728,7 +1736,7 @@ function drawTbaChart(tbaName) {
 
 document.getElementById('btn-export-word').onclick = () => {
     const reportNode = document.getElementById('report-content');
-    const headerNode = document.getElementById('report-header'); 
+    const headerNode = document.getElementById('report-header');
 
     if (reportNode.classList.contains('hidden')) {
         const genButton = document.getElementById('btn-gen');
@@ -1739,14 +1747,14 @@ document.getElementById('btn-export-word').onclick = () => {
     }
 
     const cloneContent = reportNode.cloneNode(true);
-    const cloneHeader = headerNode.cloneNode(true); 
+    const cloneHeader = headerNode.cloneNode(true);
     const canvases = reportNode.querySelectorAll('canvas');
     const clonedCanvases = cloneContent.querySelectorAll('canvas');
 
     canvases.forEach((canvas, index) => {
         const imgData = canvas.toDataURL("image/png");
         const img = document.createElement('img');
-        img.src = imgData; img.style.width = '100%'; img.style.maxWidth = '600px'; 
+        img.src = imgData; img.style.width = '100%'; img.style.maxWidth = '600px';
         clonedCanvases[index].parentNode.replaceChild(img, clonedCanvases[index]);
     });
 
@@ -1763,7 +1771,7 @@ document.getElementById('btn-export-word').onclick = () => {
             .text-right { text-align: right; }
         </style>
         </head><body>`;
-    
+   
     const sourceHTML = header + cloneHeader.innerHTML + "<br><hr><br>" + cloneContent.innerHTML + "</body></html>";
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
@@ -1774,7 +1782,7 @@ document.getElementById('btn-export-word').onclick = () => {
 
 document.getElementById('btn-export-pdf').onclick = () => { window.print(); };
 
-let manualImages = []; 
+let manualImages = [];
 document.getElementById("manual-images").addEventListener("change", function (e) {
     const files = Array.from(e.target.files);
     files.forEach(file => {
