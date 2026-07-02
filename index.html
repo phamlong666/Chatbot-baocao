@@ -1631,22 +1631,28 @@ function drawTbaChart(tbaName) {
   const chartTitle = document.getElementById('tba-chart-title');
   if(!chartBox || !state.files.baocao) return;
 
+  // 1. Khai báo các sheet dữ liệu từ file báo cáo tổng hợp
   const sheet2025 = state.files.baocao["TBA năm 2025"];
   const sheet2026 = state.files.baocao["TBA năm 2026"];
+  const sheetPlan = state.files.baocao["Kế hoạch TBA"]; 
 
+  // Mảng chứa dữ liệu 12 tháng (mặc định là null)
   let data2025 = Array(12).fill(null);
   let data2026 = Array(12).fill(null);
+  let dataPlan = Array(12).fill(null);
 
+  // 2. Trích xuất dữ liệu Quá khứ (Năm 2025)
   if(sheet2025 && sheet2025.length > 1) {
     const row2025 = sheet2025.slice(1).find(r => String(r[2] || '').trim().toLowerCase() === tbaName.toLowerCase());
     if(row2025) {
       for(let i = 0; i < 12; i++) {
-        const val = parseFloat(row2025[3 + i]);
+        const val = parseFloat(row2025[3 + i]); 
         data2025[i] = !isNaN(val) ? val : null;
       }
     }
   }
 
+  // 3. Trích xuất dữ liệu Thực hiện (Năm 2026 - Lũy kế đến tháng hiện tại)
   if(sheet2026 && sheet2026.length > 1) {
     const row2026 = sheet2026.slice(1).find(r => String(r[2] || '').trim().toLowerCase() === tbaName.toLowerCase());
     if(row2026) {
@@ -1655,18 +1661,38 @@ function drawTbaChart(tbaName) {
           const val = parseFloat(row2026[3 + i]);
           data2026[i] = !isNaN(val) ? val : null;
         } else {
-          data2026[i] = null;
+          data2026[i] = null; 
         }
       }
     }
   }
 
+  // 4. Trích xuất dữ liệu Kế hoạch năm hiện tại
+  if(sheetPlan && sheetPlan.length > 1) {
+    const rowPlan = sheetPlan.slice(1).find(r => String(r[0] || '').trim().toLowerCase() === tbaName.toLowerCase());
+    if(rowPlan) {
+      for(let i = 0; i < 12; i++) {
+        const val = parseFloat(rowPlan[1 + i]); 
+        dataPlan[i] = !isNaN(val) ? val : null;
+      }
+    }
+  }
+
+  // 5. Hiển thị box chứa và cập nhật tiêu đề biểu đồ
   chartBox.classList.remove('hidden');
   chartTitle.innerText = `BIỂU ĐỒ DIỄN BIẾN TỔN THẤT ĐIỆN NĂNG - ${tbaName.toUpperCase()}`;
 
+  // 6. Khởi tạo / Làm mới Canvas Chart.js
   const ctxTba = document.getElementById('loss-tba-public-line').getContext('2d');
-  try { if(state.charts['loss-tba-public-line'] && state.charts['loss-tba-public-line'].destroy) state.charts['loss-tba-public-line'].destroy(); } catch(e){}
+  try { 
+    if(state.charts['loss-tba-public-line'] && state.charts['loss-tba-public-line'].destroy) {
+      state.charts['loss-tba-public-line'].destroy(); 
+    }
+  } catch(e){
+    console.error("Lỗi khi xóa biểu đồ cũ:", e);
+  }
 
+  // 7. Cấu hình vẽ biểu đồ đường (Line Chart) bằng Chart.js
   const newTbaChart = new Chart(ctxTba, {
     type: 'line',
     data: {
@@ -1675,7 +1701,7 @@ function drawTbaChart(tbaName) {
         {
           label: `Năm báo cáo ${state.year} (Đến T${state.month})`,
           data: data2026,
-          borderColor: '#dc2626',
+          borderColor: '#dc2626', 
           backgroundColor: '#dc2626',
           borderWidth: 3,
           pointRadius: 4,
@@ -1684,8 +1710,11 @@ function drawTbaChart(tbaName) {
           datalabels: {
             align: 'top',
             anchor: 'end',
-            color: '#000000',
-            font: { weight: 'bold', size: 11 },
+            color: '#dc2626', 
+            font: { 
+              weight: 'bold', 
+              size: 13        
+            },
             offset: 4,
             formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
           }
@@ -1693,7 +1722,7 @@ function drawTbaChart(tbaName) {
         {
           label: `Cùng kỳ năm ${state.year - 1} (Cả năm)`,
           data: data2025,
-          borderColor: '#1d4ed8',
+          borderColor: '#1d4ed8', 
           backgroundColor: '#1d4ed8',
           borderWidth: 3,
           pointRadius: 4,
@@ -1702,9 +1731,27 @@ function drawTbaChart(tbaName) {
           datalabels: {
             align: 'bottom',
             anchor: 'start',
-            color: '#000000',
+            color: '#1d4ed8', 
             font: { weight: 'bold', size: 11 },
             offset: 4,
+            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+          }
+        },
+        {
+          label: `Kế hoạch năm ${state.year}`,
+          data: dataPlan,
+          borderColor: '#7c3aed', // THAY ĐỔI: Đổi sang màu tím sẫm rõ nét
+          backgroundColor: '#7c3aed',
+          borderWidth: 2,
+          pointRadius: 4,
+          tension: 0.1,
+          spanGaps: true,
+          datalabels: {
+            align: 'bottom',
+            anchor: 'start',
+            color: '#7c3aed', // THAY ĐỔI: Chữ hiển thị cũng đổi sang màu cam đậm
+            font: { weight: 'bold', size: 11 },
+            offset: 8,
             formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
           }
         }
@@ -1714,7 +1761,11 @@ function drawTbaChart(tbaName) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
+        legend: { 
+          display: true, 
+          position: 'bottom', 
+          labels: { font: { weight: 'bold' } } 
+        },
         datalabels: { display: true }
       },
       scales: {
