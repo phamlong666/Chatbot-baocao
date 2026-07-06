@@ -113,10 +113,10 @@
         <input id="m-371" placeholder="371 E6.22 (km)" class="border p-2 rounded text-sm" value="40.23">
         <input id="m-373" placeholder="373 E6.22 (km)" class="border p-2 rounded text-sm" value="71.77">
         <input id="m-lt-day" placeholder="Đường dây hạ thế (km)" class="border p-2 rounded text-sm" value="667.40 ">
-    <input id="m-recloser" placeholder="Máy cắt Recloser (bộ)" class="border p-2 rounded text-sm" value="06 ">
-    <input id="m-lbs" placeholder="LBS (bộ)" class="border p-2 rounded text-sm" value="21 ">
-    <input id="m-tubutt" placeholder="Tụ bù trung thế (bộ)" class="border p-2 rounded text-sm" value="04 ">
-    <input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
+        <input id="m-recloser" placeholder="Máy cắt Recloser (bộ)" class="border p-2 rounded text-sm" value="06 ">
+        <input id="m-lbs" placeholder="LBS (bộ)" class="border p-2 rounded text-sm" value="21 ">
+        <input id="m-tubutt" placeholder="Tụ bù trung thế (bộ)" class="border p-2 rounded text-sm" value="04 ">
+        <input id="m-tbuht" placeholder="Tụ bù hạ thế (bộ)" class="border p-2 rounded text-sm" value="297 ">
       </div>
       <textarea id="m-other" class="w-full border p-2 rounded mt-3 text-sm" placeholder="Nhập nội dung mục 6 (Công tác khác)..."></textarea>
       <div class="mt-6">
@@ -219,7 +219,7 @@
         </div>
       </section>
 
- <section class="mb-8">
+      <section class="mb-8">
         <h4 class="font-bold text-black mb-2">3.4. Báo cáo tổn thất</h4>
         <h5 class="font-bold text-blue-700">3.4.1. Tổn thất đơn vị kỳ thương phẩm</h5>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -231,11 +231,53 @@
           <div class="h-64 border p-2"><canvas id="loss-cap"></canvas></div>
           <div class="h-64 border p-2"><canvas id="loss-cap-cum"></canvas></div>
         </div>
+        
         <h5 class="font-bold text-blue-700">3.4.3. Tổn thất trung áp</h5>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div class="h-64 border p-2"><canvas id="loss-mid"></canvas></div>
           <div class="h-64 border p-2"><canvas id="loss-mid-cum"></canvas></div>
         </div>
+
+        <!-- BỔ SUNG MỤC 3.4.3.1. Tìm đường dây trung áp -->
+        <div class="border p-4 rounded bg-gray-50 mb-6">
+          <h6 class="font-bold text-blue-800 text-sm mb-3">3.4.3.1. Tìm đường dây trung áp</h6>
+          <div class="flex flex-wrap items-center gap-4 text-xs hidden-print mb-3">
+            <div class="flex items-center gap-1">
+              <span class="font-semibold">Đường dây:</span>
+              <select id="line-search-select" class="border rounded p-1 bg-white font-bold text-blue-800">
+                <option value="471">471</option>
+                <option value="472">472</option>
+                <option value="473">473</option>
+                <option value="371">371</option>
+                <option value="373">373</option>
+                <option value="all">Tất cả</option>
+              </select>
+            </div>
+            <div id="line-search-type-block" class="flex items-center gap-1">
+              <span class="font-semibold">Dạng biểu đồ:</span>
+              <select id="line-search-chart-type" class="border rounded p-1 bg-white font-bold">
+                <option value="line">Biểu đồ đường (Line)</option>
+                <option value="bar">Biểu đồ cột (Bar)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-semibold">Tháng:</span>
+              <select id="line-search-month" class="border rounded p-1 bg-white font-bold"></select>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-semibold">Năm:</span>
+              <select id="line-search-year" class="border rounded p-1 bg-white font-bold"></select>
+            </div>
+            <button id="btn-draw-line-search" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-1 rounded font-bold transition">
+              Xem biểu đồ tổn thất đường dây
+            </button>
+          </div>
+          <div id="line-search-chart-box" class="hidden">
+            <div class="p-2 border border-b-0 rounded-t bg-white text-center font-bold text-blue-900 text-sm" id="line-search-chart-title">Biểu đồ tổn thất đường dây</div>
+            <div class="h-80 border p-2 bg-white rounded-b"><canvas id="c-line-search-canvas"></canvas></div>
+          </div>
+        </div>
+
         <h5 class="font-bold text-blue-700">3.4.4. Tổn thất hạ áp</h5>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="h-64 border p-2"><canvas id="loss-low"></canvas></div>
@@ -384,29 +426,49 @@ const CHART_COLORS = [
   const selMonth = document.getElementById('sel-month');
   const sumFromMonth = document.getElementById('sum-from-month');
   const sumToMonth = document.getElementById('sum-to-month');
+  const lineSearchMonth = document.getElementById('line-search-month');
  
   for(let i=1; i<=12; i++) {
     selMonth.add(new Option(i, i));
     sumFromMonth.add(new Option("Tháng " + i, i));
     sumToMonth.add(new Option("Tháng " + i, i));
+    lineSearchMonth.add(new Option(i, i));
   }
   selMonth.value = state.month;
   sumFromMonth.value = 1;
   sumToMonth.value = state.month;
+  lineSearchMonth.value = state.month;
 
   const selYear = document.getElementById('sel-year');
   const sumYear = document.getElementById('sum-year');
+  const lineSearchYear = document.getElementById('line-search-year');
   const curY = new Date().getFullYear();
   const maxYear = 2030;
   for(let i=curY-3; i<=maxYear; i++) {
     selYear.add(new Option(i, i));
     sumYear.add(new Option(i, i));
+    lineSearchYear.add(new Option(i, i));
   }
   selYear.value = state.year;
   sumYear.value = state.year;
+  lineSearchYear.value = state.year;
 
   document.getElementById('display-period').innerText = `Tháng ${state.month} Năm ${state.year}`;
   document.getElementById('print-date').innerText = new Date().toLocaleDateString('vi-VN');
+
+  // Sự kiện ẩn hiện block chọn loại biểu đồ đường/cột dựa vào giá trị "tất cả"
+  document.getElementById('line-search-select').onchange = function() {
+    const block = document.getElementById('line-search-type-block');
+    if (this.value === 'all') {
+      block.classList.add('hidden');
+    } else {
+      block.classList.remove('hidden');
+    }
+  };
+
+  document.getElementById('btn-draw-line-search').onclick = () => {
+    executeLineSearchChart();
+  };
 })();
 
 document.getElementById('btn-apply-period').onclick = () => {
@@ -418,10 +480,15 @@ document.getElementById('btn-apply-period').onclick = () => {
  
   document.getElementById('sum-to-month').value = state.month;
   document.getElementById('sum-year').value = state.year;
+  document.getElementById('line-search-month').value = state.month;
+  document.getElementById('line-search-year').value = state.year;
 
   const currentSearch = document.getElementById('search-tba-input').value.trim();
   if(currentSearch && state.files.baocao) {
      drawTbaChart(currentSearch);
+  }
+  if(state.files.baocao) {
+     executeLineSearchChart();
   }
 };
 
@@ -500,6 +567,9 @@ document.getElementById('btn-gen').onclick = () => {
   if(currentSearch) {
      drawTbaChart(currentSearch);
   }
+
+  // Tự động kích hoạt vẽ biểu đồ tìm đường dây trung áp khi bấm nút Tạo báo cáo
+  executeLineSearchChart();
 
   document.getElementById('report-content').scrollIntoView({behavior:'smooth'});
 };
@@ -1071,12 +1141,12 @@ function doIncidentSummaryAggregation() {
   }
 
   const fromMonth = parseInt(document.getElementById('sum-from-month').value);
-  const toMonth = parseInt(document.getElementById('sum-to-month').value);
+  const textToMonth = parseInt(document.getElementById('sum-to-month').value);
   const filterYear = parseInt(document.getElementById('sum-year').value);
   const filterLine = document.getElementById('sum-line').value;
   const filterType = document.getElementById('sum-type').value;
 
-  if (fromMonth > toMonth) {
+  if (fromMonth > textToMonth) {
     resultArea.innerHTML = '<p class="text-red-500 italic">Lỗi điều kiện lọc: "Từ tháng" phải nhỏ hơn hoặc bằng "Đến tháng".</p>';
     return;
   }
@@ -1108,7 +1178,7 @@ function doIncidentSummaryAggregation() {
       const rowLine = String(r[idxLine] || '').trim();
       const rowType = String(r[idxType] || '').trim();
 
-      if (rowY === filterYear && rowM >= fromMonth && rowM <= toMonth) {
+      if (rowY === filterYear && rowM >= fromMonth && rowM <= textToMonth) {
         let matchesLine = (filterLine === 'ALL') ? true : rowLine.includes(filterLine);
         let matchesType = (filterType === 'ALL') ? true : rowType.toLowerCase() === filterType.toLowerCase();
         return matchesLine && matchesType;
@@ -1118,7 +1188,7 @@ function doIncidentSummaryAggregation() {
   });
 
   let html = `<div class="p-2 bg-gray-100 text-blue-900 border font-bold text-center mt-2">
-                BẢNG TỔNG HỢP CHI TIẾT SỰ CỐ TỪ THÁNG ${fromMonth} ĐẾN THÁNG ${toMonth} NĂM ${filterYear} - ĐƯỜNG DÂY: ${filterLine === 'ALL' ? 'TẤT CẢ' : filterLine} - LOẠI SỰ CỐ: ${filterType === 'ALL' ? 'TẤT CẢ' : filterType.toUpperCase()}
+                BẢNG TỔNG HỢP CHI TIẾT SỰ CỐ TỪ THÁNG ${fromMonth} ĐẾN THÁNG ${textToMonth} NĂM ${filterYear} - ĐƯỜNG DÂY: ${filterLine === 'ALL' ? 'TẤT CẢ' : filterLine} - LOẠI SỰ CỐ: ${filterType === 'ALL' ? 'TẤT CẢ' : filterType.toUpperCase()}
               </div>`;
   html += '<table class="report-table"><thead><tr><th>STT</th><th>Ngày</th><th>Đường dây</th><th>Vị trí/Thiết bị</th><th>Tóm tắt Nguyên nhân</th><th>Tính chất</th><th>Loại sự cố</th></tr></thead><tbody>';
  
@@ -1318,6 +1388,165 @@ function buildDoughnutChartLoss(canvasId, tableAreaId, groupsData, labelText) {
   });
 
   state.charts[canvasId] = newChart;
+}
+
+// HÀM MỚI BỔ SUNG: Xử lý tìm kiếm và xử lý logic dữ liệu vẽ biểu đồ tổn thất đường dây
+function executeLineSearchChart() {
+  const chartBox = document.getElementById('line-search-chart-box');
+  const chartTitle = document.getElementById('line-search-chart-title');
+  if (!chartBox || !state.files.baocao) return;
+
+  const selectedLine = document.getElementById('line-search-select').value;
+  const chartMode = document.getElementById('line-search-chart-type').value;
+  const reqMonth = parseInt(document.getElementById('line-search-month').value);
+  const reqYear = parseInt(document.getElementById('line-search-year').value);
+
+  const sCungKy = state.files.baocao["Đường dây cùng kỳ"];
+  const sKeHoach = state.files.baocao["Đường dây kế hoạch"];
+  const sNam = state.files.baocao["Đường dây năm"];
+
+  if (!sCungKy || !sKeHoach || !sNam) {
+    alert("Thiếu một trong các sheet: 'Đường dây cùng kỳ', 'Đường dây kế hoạch', 'Đường dây năm' trong tệp Baocao_tonghop.");
+    return;
+  }
+
+  chartBox.classList.remove('hidden');
+  const linesToQuery = ['471', '472', '473', '371', '373'];
+
+  // Khởi tạo / Làm mới Canvas
+  const ctx = document.getElementById('c-line-search-canvas').getContext('2d');
+  try {
+    if (state.charts['c-line-search-canvas'] && state.charts['c-line-search-canvas'].destroy) {
+      state.charts['c-line-search-canvas'].destroy();
+    }
+  } catch(e) { console.error(e); }
+
+  // TRƯỜNG HỢP 1: Người dùng lựa chọn "TẤT CẢ" đường dây -> Vẽ biểu đồ hình Cột nhóm
+  if (selectedLine === 'all') {
+    chartTitle.innerText = `BIỂU ĐỒ SO SÁNH TỔN THẤT TOÀN BỘ ĐƯỜNG DÂY TRUNG ÁP - THÁNG ${reqMonth}/${reqYear}`;
+    
+    let arrCungKy = [], arrKeHoach = [], arrNam = [];
+
+    linesToQuery.forEach(lName => {
+      // Cùng kỳ (Lấy toàn bộ tháng chỉ định)
+      const rCK = sCungKy.slice(1).find(r => String(r[1] || '').trim().includes(lName));
+      arrCungKy.push(rCK ? (parseFloat(rCK[2 + reqMonth]) || 0) : 0);
+
+      // Kế hoạch (Lấy toàn bộ tháng chỉ định)
+      const rKH = sKeHoach.slice(1).find(r => String(r[1] || '').trim().includes(lName));
+      arrKeHoach.push(rKH ? (parseFloat(rKH[2 + reqMonth]) || 0) : 0);
+
+      // Năm báo cáo (Lấy toàn bộ tháng chỉ định)
+      const rN = sNam.slice(1).find(r => String(r[1] || '').trim().includes(lName));
+      arrNam.push(rN ? (parseFloat(rN[2 + reqMonth]) || 0) : 0);
+    });
+
+    const newBarGroupChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: linesToQuery.map(l => "ĐD " + l),
+        datasets: [
+          { label: `Cùng kỳ năm ${reqYear - 1}`, data: arrCungKy, backgroundColor: '#2563eb', barPercentage: 0.7, categoryPercentage: 0.6 },
+          { label: `Năm báo cáo ${reqYear}`, data: arrNam, backgroundColor: '#ef4444', barPercentage: 0.7, categoryPercentage: 0.6 },
+          { label: `Kế hoạch năm ${reqYear}`, data: arrKeHoach, backgroundColor: '#f59e0b', barPercentage: 0.7, categoryPercentage: 0.6 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
+          datalabels: {
+            display: true, color: '#000', anchor: 'end', align: 'top', font: { weight: 'bold', size: 9 },
+            formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: '%', font: { weight: 'bold' } } }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+    state.charts['c-line-search-canvas'] = newBarGroupChart;
+
+  } else {
+    // TRƯỜNG HỢP 2: Người dùng lựa chọn cụ thể TỪNG ĐƯỜNG DÂY ĐƠN LẺ
+    chartTitle.innerText = `BIỂU ĐỒ DIỄN BIẾN TỔN THẤT ĐIỆN NĂNG ĐƯỜNG DÂY ${selectedLine} - NĂM KỲ ${reqYear}`;
+
+    let dataCungKy = Array(12).fill(null);
+    let dataKeHoach = Array(12).fill(null);
+    let dataNam = Array(12).fill(null);
+
+    const rCK = sCungKy.slice(1).find(r => String(r[1] || '').trim().includes(selectedLine));
+    if (rCK) {
+      for(let i = 0; i < 12; i++) dataCungKy[i] = !isNaN(parseFloat(rCK[3 + i])) ? parseFloat(rCK[3 + i]) : null;
+    }
+    const rKH = sKeHoach.slice(1).find(r => String(r[1] || '').trim().includes(selectedLine));
+    if (rKH) {
+      for(let i = 0; i < 12; i++) dataKeHoach[i] = !isNaN(parseFloat(rKH[3 + i])) ? parseFloat(rKH[3 + i]) : null;
+    }
+    const rN = sNam.slice(1).find(r => String(r[1] || '').trim().includes(selectedLine));
+    if (rN) {
+      for(let i = 0; i < 12; i++) {
+        // Chỉ hiển thị/vẽ biểu đồ đường dây năm đến đúng tháng được chỉ định
+        if ((i + 1) <= reqMonth) {
+          dataNam[i] = !isNaN(parseFloat(rN[3 + i])) ? parseFloat(rN[3 + i]) : null;
+        } else {
+          dataNam[i] = null;
+        }
+      }
+    }
+
+    const targetType = chartMode === 'bar' ? 'bar' : 'line';
+    const singleChartConfig = {
+      type: targetType,
+      data: {
+        labels: Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`),
+        datasets: [
+          {
+            label: `Cùng kỳ năm ${reqYear - 1}`,
+            data: dataCungKy,
+            borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', borderWidth: 2.5, tension: 0.1, pointRadius: 3.5,
+            datalabels: {
+              align: 'top', anchor: 'end', color: '#1d4ed8', font: { weight: 'bold', size: 10 }, offset: 4,
+              formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+            }
+          },
+          {
+            label: `Kế hoạch năm ${reqYear}`,
+            data: dataKeHoach,
+            borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2.5, tension: 0.1, pointRadius: 3.5,
+            datalabels: {
+              align: 'top', anchor: 'end', color: '#10b981', font: { weight: 'bold', size: 10 }, offset: 4,
+              formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+            }
+          },
+          {
+            label: `Năm báo cáo ${reqYear} (Đến T${reqMonth})`,
+            data: dataNam,
+            borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 3, tension: 0.1, pointRadius: 4,
+            datalabels: {
+              align: 'bottom', anchor: 'start', color: '#dc2626', font: { weight: 'bold', size: 11 }, offset: 6,
+              formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
+            }
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
+          datalabels: { display: true }
+        },
+        scales: {
+          y: { beginAtZero: false, title: { display: true, text: 'Tỷ lệ %', font: { weight: 'bold' } } }
+        }
+      },
+      plugins: [ChartDataLabels]
+    };
+
+    const newSingleChart = new Chart(ctx, singleChartConfig);
+    state.charts['c-line-search-canvas'] = newSingleChart;
+  }
 }
 
 function renderSection5_KPI() {
@@ -1740,7 +1969,7 @@ function drawTbaChart(tbaName) {
         {
           label: `Kế hoạch năm ${state.year}`,
           data: dataPlan,
-          borderColor: '#7c3aed', // THAY ĐỔI: Đổi sang màu tím sẫm rõ nét
+          borderColor: '#7c3aed', 
           backgroundColor: '#7c3aed',
           borderWidth: 2,
           pointRadius: 4,
@@ -1749,7 +1978,7 @@ function drawTbaChart(tbaName) {
           datalabels: {
             align: 'bottom',
             anchor: 'start',
-            color: '#7c3aed', // THAY ĐỔI: Chữ hiển thị cũng đổi sang màu cam đậm
+            color: '#7c3aed', 
             font: { weight: 'bold', size: 11 },
             offset: 8,
             formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
@@ -1859,17 +2088,15 @@ function renderManualImages() {
                 <button onclick="updateImageAlign(${index}, 'center')" class="px-2 py-1 bg-gray-200 rounded">🔳 Giữa</button>
                 <button onclick="updateImageAlign(${index}, 'right')" class="px-2 py-1 bg-gray-200 rounded">➡️ Phải</button>
             </div>
-            <label class="text-xs mt-2 block">Kích thước (px):</label>
-            <input type="number" min="100" max="1200" value="${obj.width}" oninput="updateImageWidth(${index}, this.value)" class="w-full border rounded px-1 py-1 text-sm mt-1"/>
-            <button onclick="deleteManualImage(${index})" class="mt-2 bg-red-600 hover:bg-red-700 text-white w-full py-1 text-xs rounded">Xóa ảnh</button>
+            <button onclick="deleteManualImage(${index})" class="mt-2 w-full bg-red-600 hover:bg-red-700 text-white text-xs py-1 rounded">❌ Xóa ảnh</button>
         `;
         box.appendChild(div);
     });
 }
-function updateManualCaption(i, text) { manualImages[i].caption = text; }
-function updateImageAlign(i, align) { manualImages[i].align = align; renderManualImages(); }
-function updateImageWidth(i, width) { manualImages[i].width = Number(width); renderManualImages(); }
-function deleteManualImage(i) { manualImages.splice(i, 1); renderManualImages(); }
+
+function updateManualCaption(index, val) { manualImages[index].caption = val; }
+function updateImageAlign(index, align) { manualImages[index].align = align; renderManualImages(); }
+function deleteManualImage(index) { manualImages.splice(index, 1); renderManualImages(); }
 </script>
 </body>
 </html>
