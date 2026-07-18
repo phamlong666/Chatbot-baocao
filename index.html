@@ -1453,6 +1453,9 @@ function executeLineSearchChart() {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        layout: {
+          padding: { top: 30 } // Cấp lề trên để DataLabels không bị cắt khúc
+        },
         plugins: {
           legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
           datalabels: {
@@ -1461,7 +1464,11 @@ function executeLineSearchChart() {
           }
         },
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: '%', font: { weight: 'bold' } } }
+          y: { 
+            beginAtZero: true, 
+            grace: '15%', // Tự động kéo dài giới hạn đỉnh trục Y lên thêm 15%
+            title: { display: true, text: '%', font: { weight: 'bold' } } 
+          }
         }
       },
       plugins: [ChartDataLabels]
@@ -1525,7 +1532,7 @@ function executeLineSearchChart() {
             data: dataNam,
             borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 3, tension: 0.1, pointRadius: 4,
             datalabels: {
-              align: 'bottom', anchor: 'start', color: '#dc2626', font: { weight: 'bold', size: 11 }, offset: 6,
+              align: 'top', anchor: 'end', color: '#dc2626', font: { weight: 'bold', size: 11 }, offset: 6,
               formatter: (v) => (v !== null ? v.toFixed(2).replace(".", ",") + '%' : '')
             }
           }
@@ -1533,12 +1540,19 @@ function executeLineSearchChart() {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        layout: {
+          padding: { top: 30 } // Cấp lề trên để DataLabels không bị cắt khúc
+        },
         plugins: {
           legend: { display: true, position: 'bottom', labels: { font: { weight: 'bold' } } },
           datalabels: { display: true }
         },
         scales: {
-          y: { beginAtZero: false, title: { display: true, text: 'Tỷ lệ %', font: { weight: 'bold' } } }
+          y: { 
+            beginAtZero: false, 
+            grace: '15%', // Tự động kéo dài giới hạn đỉnh trục Y lên thêm 15%
+            title: { display: true, text: 'Tỷ lệ %', font: { weight: 'bold' } } 
+          }
         }
       },
       plugins: [ChartDataLabels]
